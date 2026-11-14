@@ -504,7 +504,7 @@ class LightwellModel {
         goalSecs = Day.goalSecs();
         lightSecs = Day.num("light");
         moveSecs = Day.num("move");
-        cups = Day.num("cups");
+        cups = Day.num("cupsToday");
         glasses = Day.num("glasses");
         tenseSecs = Day.num("tense");
         _streak = Day.num("streak");
@@ -515,7 +515,7 @@ class LightwellModel {
     function save() as Void {
         Application.Storage.setValue("light", lightSecs);
         Application.Storage.setValue("move", moveSecs);
-        Application.Storage.setValue("cups", cups);
+        Application.Storage.setValue("cupsToday", cups);
         Application.Storage.setValue("glasses", glasses);
         Application.Storage.setValue("tense", tenseSecs);
         // Tells the background service the app is open and counting.
