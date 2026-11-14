@@ -2,17 +2,25 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// The first-run guide: the logo sits above three questions, one per screen, then the plan.
+// The first-run guide: a welcome, three questions one per screen, then the plan.
 class SetupView extends WatchUi.View {
 
-    var step as Number = 0;     // 0 to 2 are the questions, 3 is the plan
+    var step as Number = 0;     // 0 is the welcome, 1 to 3 the questions, 4 the plan
     var sel as Number = 0;      // highlighted answer
 
-    // The first question asks what kind of break suits the user, not what their body can do.
-    private const ASK = ["My kind of light break", "Daylight on a workday?", "How should I nudge you?"];
-    private const ANSWERS = [["A walk outside", "A roll outside", "A seat by a window"],
+    // The roll wording lives only in settings; the guide offers walk or window.
+    private const ASK = ["How do you get light?", "Daylight on a workday?", "How should I nudge you?"];
+    private const ANSWERS = [["Walk outside", "Sitting by a window", "I don't get much sunlight"],
                              ["Almost none", "Some", "Plenty"],
                              ["Buzz and tone", "Soft buzz", "Screen only"]];
+    const WORDS = [0, 2, 3];    // the "words" setting each first answer stores; little sun gets "Step outside"
+    const ROW_Y = 112;          // centre of the first answer row
+    const ROW_H = 28;
+
+    // How many answers the current question has.
+    function count() as Number {
+        return (step >= 1 && step <= 3) ? ANSWERS[step - 1].size() : 1;
+    }
 
     private var _logo as WatchUi.BitmapResource or Graphics.BitmapReference or Null;
 
@@ -37,29 +45,51 @@ class SetupView extends WatchUi.View {
         }
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        if (step > 2) {
+        if (step == 0) {
+            put(dc, 88, Graphics.FONT_TINY, "Welcome to");
+            put(dc, 114, Graphics.FONT_MEDIUM, "Lightwell");
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            put(dc, 146, Graphics.FONT_XTINY, "Let's personalize");
+            put(dc, 164, Graphics.FONT_XTINY, "your app");
+            button(dc, 204, "Start");
+            return;
+        }
+        if (step > 3) {
             put(dc, 90, Graphics.FONT_MEDIUM, "You are set");
             put(dc, 124, Graphics.FONT_TINY, (Day.goalSecs() / 60).format("%d") + " min of light a day");
-            put(dc, 150, Graphics.FONT_TINY, "Nudge: " + Day.action());
-            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-            put(dc, 196, Graphics.FONT_TINY, "Press START");
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            put(dc, 152, Graphics.FONT_XTINY, "Change it in Settings");
+            put(dc, 170, Graphics.FONT_XTINY, "at any time");
+            button(dc, 204, "Done");
             return;
         }
 
-        put(dc, 86, Graphics.FONT_TINY, ASK[step]);
-        for (var i = 0; i < 3; i++) {
-            var y = 120 + i * 32;
+        var answers = ANSWERS[step - 1];
+        put(dc, 84, Graphics.FONT_TINY, ASK[step - 1]);
+        for (var i = 0; i < answers.size(); i++) {
+            var y = ROW_Y + i * ROW_H;
             if (i == sel) {
                 dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-                dc.fillRoundedRectangle(cx - 90, y - 14, 180, 28, 14);
+                var pw = dc.getTextWidthInPixels(answers[i], Graphics.FONT_TINY) + 28;
+                if (pw < 180) {
+                    pw = 180;   // long answers get a wider highlight
+                }
+                dc.fillRoundedRectangle(cx - pw / 2, y - 13, pw, 26, 13);
             }
             dc.setColor((i == sel) ? Graphics.COLOR_BLACK : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            put(dc, y, Graphics.FONT_TINY, ANSWERS[step][i]);
+            put(dc, y, Graphics.FONT_TINY, answers[i]);
         }
         for (var i = 0; i < 3; i++) {
-            dc.setColor((i == step) ? Graphics.COLOR_YELLOW : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor((i == step - 1) ? Graphics.COLOR_YELLOW : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(cx - 12 + i * 12, 226, 3);
         }
+    }
+
+    private function button(dc as Dc, y as Number, s as String) as Void {
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(dc.getWidth() / 2 - 60, y - 15, 120, 30, 15);
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        put(dc, y, Graphics.FONT_TINY, s);
     }
 
     private function put(dc as Dc, y as Number, font as Graphics.FontType, s as String) as Void {

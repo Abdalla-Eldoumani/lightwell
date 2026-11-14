@@ -19,9 +19,9 @@ module Day {
         return ((mins > 0) ? mins : 20) * 60;
     }
 
-    // What a nudge asks for, in the wording the user chose: walk, roll or window.
+    // What a nudge asks for, in the wording the user chose: walk, roll, window, doorstep or blinds.
     function action() as String {
-        return ["Go touch grass", "Roll outside", "Find a window"][num("words") % 3];
+        return ["Go touch grass", "Roll outside", "Find a window", "Step outside", "Open the blinds"][num("words") % 5];
     }
 
     // Minutes the local clock is ahead of UTC.
