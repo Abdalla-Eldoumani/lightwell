@@ -12,7 +12,7 @@ import Toybox.Time.Gregorian;
 
 class LightwellModel {
 
-    var goalSecs as Number = Day.GOAL_SECS;
+    var goalSecs as Number = 1200;
 
     // Light (solar sensor)
     var lightPct as Number = 0;
@@ -47,8 +47,10 @@ class LightwellModel {
     var hasBaro as Boolean = false;
     var baroDelta as Float = 0.0;   // hPa change over the last 3 hours
 
-    var hist as Array<Number> = [0, 0, 0, 0, 0, 0] as Array<Number>;   // minutes of light, yesterday first
+    var hist as Array<Number> = [] as Array<Number>;   // minutes of light, yesterday first
+    var seeded as Boolean = false;                     // the history is demo data
     var note as String = "";
+    var why as String = "";         // the reason behind the nudge on screen
 
     private var _streak as Number = 0;
 
@@ -110,19 +112,20 @@ class LightwellModel {
             }
             if (before < goalSecs && lightSecs >= goalSecs) {
                 setNote("Goal reached");
-                buzz();
+                alert(Attention.TONE_SUCCESS);
                 save();
             }
         }
 
         checkSleeve();
-        if (_ticks % 10 == 0) {
+        if (_ticks % 10 == 0 || demo == 0) {
             checkNudge();
         }
         if (_noteTicks > 0) {
             _noteTicks -= 1;
             if (_noteTicks == 0) {
                 note = "";
+                why = "";
             }
         }
         if (_ticks % 60 == 0) {
@@ -134,6 +137,8 @@ class LightwellModel {
     function cycleDemo() as Void {
         if (demo < 0) {
             demo = 0;
+            // Demo level 0 plays the part of an hour at a desk, so the nudge can be shown.
+            _lastNudge = _ticks - 1801;
         } else if (demo == 0) {
             demo = 15;
         } else if (demo == 15) {
@@ -185,7 +190,7 @@ class LightwellModel {
             _probe = false;
             if (gpsQuality >= Position.QUALITY_USABLE && !inLight && sunEl > 3.0) {
                 setNote("Uncover watch");
-                buzz();
+                alert(Attention.TONE_ALERT_LO);
             }
         }
     }
@@ -258,11 +263,17 @@ class LightwellModel {
     }
 
     private function checkNudge() as Void {
+        // The move bar reaches level 1 after about an hour without moving, then one level per 15 minutes.
         var mb = ActivityMonitor.getInfo().moveBarLevel;
-        if (mb != null && mb >= 1 && sunUp() && !inLight && lightSecs < goalSecs && _ticks - _lastNudge > 1800) {
+        var sat = (mb != null && mb >= 1) ? 60 + 15 * (mb - 1) : 0;
+        if (demo == 0) {
+            sat = 60;
+        }
+        if (sat > 0 && sunUp() && !inLight && lightSecs < goalSecs && _ticks - _lastNudge > 1800) {
             _lastNudge = _ticks;
-            setNote("Step outside");
-            buzz();
+            setNote(Day.action());
+            why = "Sitting " + hm(sat);
+            alert(Attention.TONE_ALERT_HI);
         }
     }
 
@@ -347,27 +358,41 @@ class LightwellModel {
         return r.toFloat();
     }
 
+    // 75 becomes "1h 15m", 60 becomes "1h", 45 becomes "45m".
+    function hm(mins as Number) as String {
+        if (mins < 60) {
+            return mins.format("%d") + "m";
+        }
+        var rest = mins % 60;
+        return (mins / 60).format("%d") + "h" + ((rest > 0) ? " " + rest.format("%d") + "m" : "");
+    }
+
     private function setNote(text as String) as Void {
         note = text;
         _noteTicks = 15;
     }
 
-    private function buzz() as Void {
-        if (Attention has :vibrate) {
-            Attention.vibrate([new Attention.VibeProfile(60, 400)] as Array<Attention.VibeProfile>);
+    // Nudge setting: 0 buzz and tone, 1 soft buzz, 2 screen only.
+    private function alert(tone as Attention.Tone) as Void {
+        var level = Day.num("buzz");
+        if (level < 2 && (Attention has :vibrate)) {
+            var pulse = (level == 1) ? new Attention.VibeProfile(25, 150) : new Attention.VibeProfile(60, 400);
+            Attention.vibrate([pulse] as Array<Attention.VibeProfile>);
+        }
+        if (level == 0 && (Attention has :playTone)) {
+            Attention.playTone(tone);
         }
     }
 
-    private function load() as Void {
+    function load() as Void {
         Day.roll();
         _day = Day.today();
+        goalSecs = Day.goalSecs();
         lightSecs = Day.num("light");
         moveSecs = Day.num("move");
         _streak = Day.num("streak");
-        var h = Application.Storage.getValue("hist");
-        if ((h instanceof Array) && h.size() == 6) {
-            hist = h as Array<Number>;
-        }
+        hist = Day.history();
+        seeded = Day.num("seeded") == 1;
     }
 
     function save() as Void {
