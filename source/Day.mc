@@ -116,7 +116,7 @@ module Day {
         Application.Storage.setValue("day", now);
         Application.Storage.setValue("light", 0);
         Application.Storage.setValue("move", 0);
-        Application.Storage.setValue("cups", 0);
+        Application.Storage.setValue("cupsToday", 0);
         Application.Storage.setValue("glasses", 0);
         Application.Storage.setValue("tense", 0);
     }
