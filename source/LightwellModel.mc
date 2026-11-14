@@ -10,7 +10,7 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 
-class DaylightModel {
+class LightwellModel {
 
     var goalSecs as Number = Day.GOAL_SECS;
 
