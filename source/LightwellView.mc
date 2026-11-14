@@ -6,9 +6,7 @@ import Toybox.WatchUi;
 
 class LightwellView extends WatchUi.View {
 
-    private const PAGES = 4;
-    // Stand-in history for demo mode, yesterday first. Shown under a SAMPLE label.
-    private const SAMPLE = [22, 8, 25, 0, 21, 24] as Array<Number>;
+    private const PAGES = 5;
 
     private var _model as LightwellModel;
     private var _timer as Timer.Timer?;
@@ -46,12 +44,17 @@ class LightwellView extends WatchUi.View {
     function onUpdate(dc as Dc) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+        if (dc has :setAntiAlias) {
+            dc.setAntiAlias(true);
+        }
         if (_page == 0) {
             drawRing(dc);
         } else if (_page == 1) {
             drawSun(dc);
         } else if (_page == 2) {
             drawWeek(dc);
+        } else if (_page == 3) {
+            drawMonth(dc);
         } else {
             drawSensors(dc);
         }
@@ -87,13 +90,17 @@ class LightwellView extends WatchUi.View {
         } else if (m.hasFix && !m.sunUp()) {
             state = "SUN DOWN";
         }
-        dc.setColor(m.inLight ? Graphics.COLOR_YELLOW : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        var nudging = !m.why.equals("");
+        if (nudging) {
+            state = m.hm(m.setMin - m.nowMin()) + " of sun left";
+        }
+        dc.setColor((m.inLight || nudging) ? Graphics.COLOR_YELLOW : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         line(dc, 60, state, 100);
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         text(dc, cx, cy - 8, Graphics.FONT_NUMBER_THAI_HOT, (m.lightSecs / 60).format("%d"));
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        line(dc, cy + 38, "of " + (m.goalSecs / 60).format("%d") + " min", 100);
+        line(dc, cy + 38, nudging ? m.why : "of " + (m.goalSecs / 60).format("%d") + " min", 100);
 
         var info = "";
         if (!m.note.equals("")) {
@@ -178,22 +185,21 @@ class LightwellView extends WatchUi.View {
     // Page 3: the habit. Six finished days and today, against the goal line.
     private function drawWeek(dc as Dc) as Void {
         var m = _model;
-        var demo = m.demo >= 0;
         var goalMin = m.goalSecs / 60;
         var base = 168;
         var maxH = 84;
         // A bar is full height at one and a half times the goal.
         var top = goalMin * 3 / 2;
 
-        dc.setColor(demo ? Graphics.COLOR_RED : Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-        line(dc, 46, demo ? "SAMPLE WEEK" : "LAST 7 DAYS", 122);
+        dc.setColor(m.seeded ? Graphics.COLOR_RED : Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        line(dc, 46, m.seeded ? "7 DAYS (DEMO)" : "LAST 7 DAYS", 122);
 
         var met = 0;
         for (var i = 0; i < 7; i++) {
             // Left to right: six days ago up to today.
             var mins = m.lightSecs / 60;
             if (i < 6) {
-                mins = demo ? SAMPLE[5 - i] : m.hist[5 - i];
+                mins = m.hist[5 - i];
             }
             var color = Graphics.COLOR_DK_GRAY;
             if (mins >= goalMin) {
@@ -218,7 +224,52 @@ class LightwellView extends WatchUi.View {
         line(dc, 214, "Streak " + m.streak().format("%d"), 122);
     }
 
-    // Page 4: what each sensor is reading and what it is used for.
+    // Page 4: the month as a grid of days. A full dot is a day at goal.
+    private function drawMonth(dc as Dc) as Void {
+        var m = _model;
+        var goalMin = m.goalSecs / 60;
+
+        dc.setColor(m.seeded ? Graphics.COLOR_RED : Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        line(dc, 40, m.seeded ? "30 DAYS (DEMO)" : "LAST 30 DAYS", 122);
+
+        var met = 0;
+        var early = 0;
+        var late = 0;
+        for (var i = 0; i < 30; i++) {
+            // Reading order: 29 days ago at the top left, today at the bottom right.
+            var mins = (i == 29) ? m.lightSecs / 60 : m.hist[28 - i];
+            if (i < 7) {
+                early += mins;
+            } else if (i >= 23) {
+                late += mins;
+            }
+            var x = 55 + (i % 6) * 30;
+            var y = 72 + (i / 6) * 26;
+            if (mins >= goalMin) {
+                met += 1;
+                dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+                dc.fillCircle(x, y, 10);
+            } else if (mins > 0) {
+                dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+                dc.fillCircle(x, y, 5);
+            } else {
+                dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+                dc.drawCircle(x, y, 5);
+            }
+            if (i == 29) {
+                dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+                dc.drawCircle(x, y, 12);
+            }
+        }
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        line(dc, 204, met.format("%d") + " of 30 days at goal", 122);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        text(dc, dc.getWidth() / 2, 226, Graphics.FONT_XTINY,
+            (early / 7).format("%d") + " min then, " + (late / 7).format("%d") + " now");
+    }
+
+    // Page 5: what each sensor is reading and what it is used for.
     private function drawSensors(dc as Dc) as Void {
         var m = _model;
 
@@ -268,7 +319,7 @@ class LightwellView extends WatchUi.View {
         var cy = dc.getHeight() / 2;
         for (var i = 0; i < PAGES; i++) {
             dc.setColor((i == _page) ? Graphics.COLOR_WHITE : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(7, cy - 18 + i * 12, 3);
+            dc.fillCircle(7, cy - (PAGES - 1) * 6 + i * 12, 3);
         }
     }
 
