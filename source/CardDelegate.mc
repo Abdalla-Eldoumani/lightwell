@@ -22,7 +22,7 @@ class CardDelegate extends WatchUi.BehaviorDelegate {
         if (_nudge) {
             _model.snooze();
         }
-        close(_nudge ? "Again in 10 min" : null);
+        close(_nudge ? "No rush" : null);
         return true;
     }
 
