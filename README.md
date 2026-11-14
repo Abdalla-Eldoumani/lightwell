@@ -1,7 +1,5 @@
 # Lightwell
 
-![Lightwell](docs/assets/logo.svg)
-
 A Garmin Connect IQ watch app that counts the daylight you get, using the watch's solar charging sensor. Built for the Fenix 7 Pro at the Tech Thursday x Garmin Hackathon in Calgary on November 14, 2026.
 
 ## Why
