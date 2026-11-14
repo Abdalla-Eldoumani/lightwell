@@ -1,34 +1,35 @@
-# Handoff: simulator and demo (Yaseen)
+# Simulator and live demo (Yaseen)
 
-You run every build, find what is broken, and drive the demo on stage. You do not need to write code. If you want to, ask Abdalla first so two people never edit the same file.
+You are the eyes for streams 1 and 2 and the hands for stream 3. You run every build, send screenshots, and drive the simulator on stage.
 
 ## Now
 
-1. The history of main was rewritten at noon and bin/ is no longer tracked. Save anything you have not pushed, then in Git Bash run these two commands:
-   - git fetch origin
-   - git reset --hard origin/main
-2. Run the app on fenix7pro (Ctrl+F5).
-3. Set the simulator position to Calgary: 51.0447, -114.0719.
-4. Screenshot all four pages and send them to Abdalla.
+1. In Git Bash: git pull. If it refuses, save your work, then run git fetch origin and git reset --hard origin/main.
+2. Run on fenix7pro (Ctrl+F5). Set the position to Calgary: 51.0447, -114.0719.
+3. If the setup questions do not appear, reset the app data from the simulator's File menu, or use hold UP, "Run setup again".
+4. Screenshot the three setup screens, the five pages and the settings menu. Send them to Abdalla and David.
 
 ## Checklist, rerun after every push
 
+- [ ] Setup: three questions, each press moves on, BACK goes back, a confirmation shows at the end.
 - [ ] No text is cut off or runs into the ring on any page.
-- [ ] Find the solar intensity control (look where the simulator sets the battery level). Moving it above 5 turns the top line to LIGHT and the minutes climb.
-- [ ] START steps the demo level. At DEMO 60 the ring fills in about 20 seconds, the watch vibrates and "Goal reached" shows.
-- [ ] DOWN and UP move through ring, sun finder, week and sensors. The dots on the left follow.
-- [ ] The sun finder points near south-west in the afternoon and shows a sunset time of 5:51 PM.
+- [ ] Sound: do you hear a tone when a nudge fires and at the goal? Does the simulator window shake? Tell the team either way, because the demo script depends on it.
+- [ ] START once: within two seconds the nudge shows the sun time left, "Sitting 1h" and the action in the chosen wording.
+- [ ] START to DEMO 60: the ring fills in about 20 seconds (10 with a 10-minute goal) and the goal is announced.
+- [ ] DOWN and UP move through ring, sun finder, week, month, sensors. The dots follow.
+- [ ] Hold UP, "Demo: month later": the week and month pages fill with a month of sample data, both titled DEMO, and the streak jumps.
+- [ ] Hold UP, "Demo: new user": everything is wiped and the setup questions start again.
+- [ ] Sun finder: a direction near south-west in the afternoon, sunset 5:51 PM.
 - [ ] Sensors page: write down which lines say "waiting".
-- [ ] Set steps and the move bar from the Simulation menu (Activity Monitoring). The nudge to go outside should fire.
-- [ ] Close the app, trigger a background temporal event from the Simulation menu, and reopen. With solar above 5, the minutes should be 5 higher.
-- [ ] Holding UP opens the settings, once Abdalla has pushed them.
+- [ ] Hold UP: every setting changes on each press, and "Clear today" empties the ring.
+- [ ] Find the solar intensity control (look where the simulator sets the battery level). Above 5 the top line reads LIGHT.
 
-Report every failure to Abdalla with a screenshot and what you pressed.
+Report every failure with a screenshot and what you pressed.
 
-## 2:30 to 3:00
+## 2:45 to 3:05
 
-Record the full demo path as a screen recording, 60 to 90 seconds. It is the backup if the simulator fails on stage.
+Record the demo path from handoff-pitch.md as a screen recording with sound. It is the backup if the simulator fails on stage.
 
 ## On stage
 
-You drive the simulator while David talks. The order is in demo-plan.md. Practise it in all three rehearsals.
+You drive, the speaker talks. Before you start: hold UP and choose "Demo: new user", so the demo begins from the first question with an empty history.
