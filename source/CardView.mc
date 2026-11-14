@@ -24,7 +24,7 @@ class CardView extends WatchUi.View {
     function onUpdate(dc as Dc) as Void {
         var cx = dc.getWidth() / 2;
         var mid = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.setColor(Palette.NAVY, Palette.NAVY);
         dc.clear();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -34,17 +34,18 @@ class CardView extends WatchUi.View {
             dc.drawBitmap(cx - 38, 14, logo);
         }
 
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(cx - 104, 91, 208, 30, 15);
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.NAVY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, 106, Graphics.FONT_SMALL, _title, mid);
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        var gap = (_lines.size() > 2) ? 23 : 26;
         for (var i = 0; i < _lines.size(); i++) {
-            dc.drawText(cx, 142 + i * 26, Graphics.FONT_TINY, _lines[i], mid);
+            dc.drawText(cx, 142 + i * gap, Graphics.FONT_TINY, _lines[i], mid);
         }
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 208, Graphics.FONT_XTINY, _nudge ? "START: going   BACK: later" : "Press START", mid);
+        dc.drawText(cx, 211, Graphics.FONT_XTINY, _nudge ? "START: going   BACK: later" : "Press START", mid);
     }
 
 }
