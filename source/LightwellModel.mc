@@ -51,7 +51,8 @@ class LightwellModel {
     var seeded as Boolean = false;                     // the history is demo data
     var note as String = "";
     var why as String = "";         // the reason behind the nudge on screen
-    // 1 sit nudge, 2 goal reached, 3 tense spell, 4 coffee past the cutoff: the view shows it full screen
+    // 1 sit nudge, 2 goal reached, 3 tense spell, 4 coffee past the cutoff, 5 midday check:
+    // the view shows it full screen
     var card as Number = 0;
 
     // Logged by hand
@@ -77,12 +78,22 @@ class LightwellModel {
     private var _lastSleeve as Number = -600;
     private var _day as Number = 0;
 
+    // The demo is pinned to the University of Calgary, because the simulator has no sky to fix on.
+    // Set this to false and the GPS fix is used instead.
+    private const PINNED = true;
+
     function initialize() {
     }
 
     function start() as Void {
         load();
         Sensor.setEnabledSensors([Sensor.SENSOR_HEARTRATE] as Array<Sensor.SensorType>);
+        if (PINNED) {
+            lat = 51.0775;
+            lon = -114.1331;
+            hasFix = true;
+            updateSun();
+        }
         onPosition(Position.getInfo());
         Position.enableLocationEvents(Position.LOCATION_ONE_SHOT, method(:onPosition));
         readPressureTrend();
@@ -134,6 +145,9 @@ class LightwellModel {
         checkSleeve();
         if (_ticks % 10 == 0 || demo == 0) {
             checkNudge();
+        }
+        if (_ticks % 10 == 5) {
+            checkMidday();
         }
         if (_noteTicks > 0) {
             _noteTicks -= 1;
@@ -195,7 +209,7 @@ class LightwellModel {
             gpsQuality = q as Number;
         }
         var loc = info.position;
-        if (loc != null) {
+        if (loc != null && !PINNED) {
             var d = loc.toDegrees();
             lat = d[0].toFloat();
             lon = d[1].toFloat();
@@ -289,6 +303,21 @@ class LightwellModel {
         if (sat > 0 && sunUp() && !inLight && lightSecs < goalSecs && _ticks - _lastNudge > 1800) {
             nudge(sat);
         }
+    }
+
+    // Once a day: past the middle of the daylight with the well under half full.
+    private function checkMidday() as Void {
+        if (Day.num("mid") != _day && sunUp() && nowMin() >= (riseMin + setMin) / 2
+                && !inLight && lightSecs < goalSecs / 2 && !quiet()) {
+            midday();
+        }
+    }
+
+    // Also run from the settings menu, to show the reminder.
+    function midday() as Void {
+        Application.Storage.setValue("mid", _day);
+        card = 5;
+        alert(Attention.TONE_ALERT_LO);
     }
 
     // Also run from the settings menu, to preview the nudge.
