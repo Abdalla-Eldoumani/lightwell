@@ -61,7 +61,7 @@ class LightwellView extends WatchUi.View {
         drawDots(dc);
     }
 
-    // Page 1: today's light against the goal.
+    // Page 1: today's light against the goal, as a well that fills from the bottom.
     private function drawRing(dc as Dc) as Void {
         var m = _model;
         var w = dc.getWidth();
@@ -71,60 +71,80 @@ class LightwellView extends WatchUi.View {
         // Pulled in from the bezel so the page dots fit outside it.
         var r = w / 2 - 18;
 
-        dc.setPenWidth(12);
+        dc.setPenWidth(3);
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(cx, cy, r);
-
-        var deg = (360.0 * m.lightSecs / m.goalSecs).toNumber();
-        dc.setColor(m.inLight ? Graphics.COLOR_YELLOW : Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-        if (deg >= 360) {
-            dc.drawCircle(cx, cy, r);
-        } else if (deg >= 1) {
-            dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, 90, (450 - deg) % 360);
-        }
         dc.setPenWidth(1);
 
+        var level = 2 * r * m.lightSecs / m.goalSecs;
+        if (level > 2 * r) {
+            level = 2 * r;
+        }
+        var surface = cy + r - level;
+        if (level > 0) {
+            dc.setClip(cx - r, surface, 2 * r, level);
+            dc.setColor(m.inLight ? Graphics.COLOR_YELLOW : Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(cx, cy, r - 4);
+        }
+
+        // The words are drawn twice so they stay readable on both sides of the surface:
+        // light on the empty part, black on the filled part.
+        dc.setClip(0, 0, w, surface);
+        ringText(dc, false);
+        if (level > 0) {
+            dc.setClip(0, surface, w, h - surface);
+            ringText(dc, true);
+        }
+        dc.clearClip();
+    }
+
+    private function ringText(dc as Dc, onFill as Boolean) as Void {
+        var m = _model;
+        var cx = dc.getWidth() / 2;
+        var cy = dc.getHeight() / 2;
+        var h = dc.getHeight();
+        var nudging = !m.why.equals("");
+        var bright = onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_WHITE;
+        var soft = onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_LT_GRAY;
+        var accent = onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_YELLOW;
+
         var state = "INDOORS";
-        if (m.inLight) {
+        if (nudging) {
+            state = m.hm(m.setMin - m.nowMin()) + " of sun left";
+        } else if (m.inLight) {
             state = "LIGHT " + m.lightPct.format("%d") + "%";
         } else if (m.hasFix && !m.sunUp()) {
             state = "SUN DOWN";
         }
-        var nudging = !m.why.equals("");
-        if (nudging) {
-            state = m.hm(m.setMin - m.nowMin()) + " of sun left";
-        }
-        dc.setColor((m.inLight || nudging) ? Graphics.COLOR_YELLOW : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor((m.inLight || nudging) ? accent : soft, Graphics.COLOR_TRANSPARENT);
         line(dc, 60, state, 100);
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(bright, Graphics.COLOR_TRANSPARENT);
         text(dc, cx, cy - 8, Graphics.FONT_NUMBER_THAI_HOT, (m.lightSecs / 60).format("%d"));
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(soft, Graphics.COLOR_TRANSPARENT);
         line(dc, cy + 38, nudging ? m.why : "of " + (m.goalSecs / 60).format("%d") + " min", 100);
 
-        var info = "";
+        var info = "Waiting for GPS";
         if (!m.note.equals("")) {
             info = m.note;
         } else if (m.hasFix) {
             var now = m.nowMin();
             if (m.sunUp()) {
-                info = "Sun left " + span(m.setMin - now);
+                info = "Sun left " + m.hm(m.setMin - now);
             } else if (now < m.riseMin) {
                 info = "Sunrise " + clock(m.riseMin);
             } else {
                 info = "Sun is down";
             }
-        } else {
-            info = "Waiting for GPS";
         }
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(bright, Graphics.COLOR_TRANSPARENT);
         line(dc, h - 64, info, 100);
 
         if (m.demo >= 0) {
-            dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             text(dc, cx, h - 38, Graphics.FONT_XTINY, "DEMO x60");
         } else {
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(soft, Graphics.COLOR_TRANSPARENT);
             text(dc, cx, h - 38, Graphics.FONT_XTINY, "Streak " + m.streak().format("%d"));
         }
     }
@@ -269,50 +289,34 @@ class LightwellView extends WatchUi.View {
             (early / 7).format("%d") + " min then, " + (late / 7).format("%d") + " now");
     }
 
-    // Page 5: what each sensor is reading and what it is used for.
+    // Page 5: the six sensors and what each one says right now, in words.
     private function drawSensors(dc as Dc) as Void {
         var m = _model;
 
         dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-        line(dc, 38, "SENSORS", 122);
+        line(dc, 40, "SENSORS", 122);
+
+        var trend = "Steady";
+        if (m.baroDelta <= -1.5) {
+            trend = "Falling";
+        } else if (m.baroDelta >= 1.5) {
+            trend = "Rising";
+        }
+        row(dc, 72, "SOLAR", (m.hasSolar || m.demo >= 0) ? m.lightPct.format("%d") + "%" : "None");
+        row(dc, 98, "HEART", (m.hr > 0) ? m.hr.format("%d") + " bpm" : "...");
+        row(dc, 124, "GPS", m.hasFix ? "Locked" : "Searching");
+        row(dc, 150, "COMPASS", m.hasHeading ? compassWord(m.heading) : "...");
+        row(dc, 176, "PRESSURE", m.hasBaro ? trend : "...");
+        row(dc, 202, "MOTION", m.moving ? "Moving" : "Still");
+    }
+
+    // Name on the left of the centre line in grey, reading on the right in white.
+    private function row(dc as Dc, y as Number, name as String, value as String) as Void {
+        var cx = dc.getWidth() / 2;
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx - 8, y, Graphics.FONT_XTINY, name, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-
-        var solar = "No solar sensor";
-        if (m.hasSolar || m.demo >= 0) {
-            solar = "Solar " + m.lightPct.format("%d") + "%, " + (m.lightSecs / 60).format("%d") + " min";
-        }
-        line(dc, 65, solar, 122);
-
-        var heart = "HR waiting";
-        if (m.hrBefore > 0) {
-            heart = "HR " + m.hrBefore.format("%d") + " in, " + m.hr.format("%d") + " now";
-        } else if (m.hr > 0) {
-            heart = "HR " + m.hr.format("%d");
-        }
-        line(dc, 92, heart, 122);
-
-        var gps = "GPS waiting";
-        if (m.hasFix) {
-            gps = "GPS " + m.lat.format("%.2f") + ", " + m.lon.format("%.2f");
-        }
-        line(dc, 119, gps, 122);
-
-        var baro = "Baro waiting";
-        if (m.hasBaro) {
-            baro = "Baro " + m.baroDelta.format("%.1f") + " hPa";
-            if (m.baroDelta <= -1.5) {
-                baro = baro + ", go now";
-            }
-        }
-        line(dc, 146, baro, 122);
-
-        line(dc, 173, "Moving " + (m.moveSecs / 60).format("%d") + " min" + (m.moving ? " (now)" : ""), 122);
-
-        var comp = "Compass waiting";
-        if (m.hasHeading) {
-            comp = "Compass " + m.heading.format("%.0f") + "°";
-        }
-        line(dc, 200, comp, 122);
+        dc.drawText(cx + 8, y, Graphics.FONT_TINY, value, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     private function drawDots(dc as Dc) as Void {
@@ -348,13 +352,6 @@ class LightwellView extends WatchUi.View {
             hh = 12;
         }
         return hh.format("%d") + ":" + mm.format("%02d") + " " + ampm;
-    }
-
-    private function span(mins as Number) as String {
-        if (mins < 0) {
-            mins = 0;
-        }
-        return (mins / 60).format("%d") + "h " + (mins % 60).format("%02d") + "m";
     }
 
     private function compassWord(az as Float) as String {
