@@ -38,7 +38,7 @@ class LightwellView extends WatchUi.View {
             var kind = m.card;
             m.card = 0;
             // Sit nudges and tense spells can be put off; the other two only inform.
-            var nudge = kind == 1 || kind == 3;
+            var nudge = kind == 1 || kind == 3 || kind == 5;
             var title = Day.action();
             var lines = [m.why, m.sunUp() ? "Sun left " + m.hm(m.setMin - m.nowMin()) : ""];
             if (kind == 2) {
@@ -46,6 +46,11 @@ class LightwellView extends WatchUi.View {
                 lines = [(m.goalSecs / 60).format("%d") + " min of daylight", "Streak " + m.streak().format("%d")];
             } else if (kind == 3) {
                 lines = ["Tense and still", "for " + m.spell.format("%d") + " min"];
+            } else if (kind == 5) {
+                title = "Midday check-in";
+                lines = ["The day is half over", "and your well is low.",
+                    ["A short stroll outside?", "A short roll outside?", "A while by the window?",
+                     "A step outside the door?", "Open the blinds a while?"][Day.num("words") % 5]];
             } else if (kind == 4) {
                 title = "Past your cutoff";
                 lines = ["Coffee after " + Day.cutoffText(), "Water instead?"];
@@ -66,7 +71,7 @@ class LightwellView extends WatchUi.View {
     }
 
     function onUpdate(dc as Dc) as Void {
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.setColor(Palette.NAVY, Palette.NAVY);
         dc.clear();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -109,14 +114,24 @@ class LightwellView extends WatchUi.View {
             level = 2 * r;
         }
         var surface = cy + r - level;
-        if (level > 0) {
-            dc.setClip(cx - r, surface, 2 * r, level);
-            dc.setColor(m.inLight ? Graphics.COLOR_YELLOW : Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+        // The fill warms through five bands as it rises, and turns green once the goal is met.
+        var full = m.lightSecs >= m.goalSecs;
+        for (var i = 0; i < 5; i++) {
+            var bottom = cy + r - i * 2 * r / 5;
+            var top = cy + r - (i + 1) * 2 * r / 5;
+            if (top < surface) {
+                top = surface;
+            }
+            if (top >= bottom) {
+                break;
+            }
+            dc.setClip(cx - r, top, 2 * r, bottom - top);
+            dc.setColor(full ? Palette.DONE : Palette.WELL[i], Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(cx, cy, r - 4);
         }
 
         // The words are drawn twice so they stay readable on both sides of the surface:
-        // light on the empty part, black on the filled part.
+        // light on the empty part, navy on the filled part.
         dc.setClip(0, 0, w, surface);
         ringText(dc, false);
         if (level > 0) {
@@ -132,9 +147,9 @@ class LightwellView extends WatchUi.View {
         var cy = dc.getHeight() / 2;
         var h = dc.getHeight();
         var nudging = !m.why.equals("");
-        var bright = onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_WHITE;
-        var soft = onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_LT_GRAY;
-        var accent = onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_YELLOW;
+        var bright = onFill ? Palette.NAVY : Graphics.COLOR_WHITE;
+        var soft = onFill ? Palette.NAVY : Graphics.COLOR_LT_GRAY;
+        var accent = onFill ? Palette.NAVY : Palette.GOLD;
 
         var state = "INDOORS";
         if (nudging) {
@@ -169,7 +184,7 @@ class LightwellView extends WatchUi.View {
         line(dc, h - 64, info, 100);
 
         if (m.demo >= 0) {
-            dc.setColor(onFill ? Graphics.COLOR_BLACK : Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(onFill ? Palette.NAVY : Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             text(dc, cx, h - 38, Graphics.FONT_XTINY, "DEMO x60");
         } else {
             dc.setColor(soft, Graphics.COLOR_TRANSPARENT);
@@ -205,7 +220,7 @@ class LightwellView extends WatchUi.View {
         var sx = cx + (r * Math.sin(a)).toNumber();
         var sy = cy - (r * Math.cos(a)).toNumber();
         if (m.sunUp()) {
-            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
             // The ray starts outside the text in the middle.
             dc.drawLine(cx + (66 * Math.sin(a)).toNumber(), cy - (66 * Math.cos(a)).toNumber(), sx, sy);
             dc.fillCircle(sx, sy, 11);
@@ -239,7 +254,7 @@ class LightwellView extends WatchUi.View {
         // A bar is full height at one and a half times the goal.
         var top = goalMin * 3 / 2;
 
-        dc.setColor(m.seeded ? Graphics.COLOR_RED : Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(m.seeded ? Graphics.COLOR_RED : Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         line(dc, 46, m.seeded ? "7 DAYS (DEMO)" : "LAST 7 DAYS", 122);
 
         var met = 0;
@@ -252,9 +267,9 @@ class LightwellView extends WatchUi.View {
             var color = Graphics.COLOR_DK_GRAY;
             if (mins >= goalMin) {
                 met += 1;
-                color = Graphics.COLOR_YELLOW;
+                color = Palette.GOLD;
             } else if (i == 6) {
-                color = Graphics.COLOR_ORANGE;
+                color = Palette.DIM;
             }
             var bar = ((mins > top) ? top : mins) * maxH / top;
             if (bar < 2) {
@@ -277,7 +292,7 @@ class LightwellView extends WatchUi.View {
         var m = _model;
         var goalMin = m.goalSecs / 60;
 
-        dc.setColor(m.seeded ? Graphics.COLOR_RED : Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(m.seeded ? Graphics.COLOR_RED : Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         line(dc, 40, m.seeded ? "30 DAYS (DEMO)" : "LAST 30 DAYS", 122);
 
         var met = 0;
@@ -295,10 +310,10 @@ class LightwellView extends WatchUi.View {
             var y = 72 + (i / 6) * 26;
             if (mins >= goalMin) {
                 met += 1;
-                dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(x, y, 10);
             } else if (mins > 0) {
-                dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(Palette.DIM, Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(x, y, 5);
             } else {
                 dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
@@ -321,7 +336,7 @@ class LightwellView extends WatchUi.View {
     private function drawSensors(dc as Dc) as Void {
         var m = _model;
 
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         line(dc, 40, "SENSORS", 122);
 
         var trend = "Steady";
@@ -332,7 +347,7 @@ class LightwellView extends WatchUi.View {
         }
         row(dc, 66, "SOLAR", (m.hasSolar || m.demo >= 0) ? m.lightPct.format("%d") + "%" : "None");
         row(dc, 89, "HEART", (m.hr > 0) ? m.hr.format("%d") + " bpm" : "...");
-        row(dc, 112, "GPS", m.hasFix ? "Locked" : "Searching");
+        row(dc, 112, "GPS", m.hasFix ? m.lat.format("%.2f") + ", " + m.lon.format("%.2f") : "Searching");
         row(dc, 135, "COMPASS", m.hasHeading ? compassWord(m.heading) : "...");
         row(dc, 158, "PRESSURE", m.hasBaro ? trend : "...");
         row(dc, 181, "MOTION", m.moving ? "Moving" : "Still");
@@ -345,7 +360,7 @@ class LightwellView extends WatchUi.View {
         var cx = dc.getWidth() / 2;
         var late = m.pastCutoff();
 
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         line(dc, 40, "DRINKS", 122);
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawLine(cx, 70, cx, 178);
@@ -356,7 +371,7 @@ class LightwellView extends WatchUi.View {
         text(dc, cx + 56, 164, Graphics.FONT_XTINY, "of " + Day.opt("h2o", 8).format("%d"));
         line(dc, 204, "Tap a side to add", 122);
 
-        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.SKY, Graphics.COLOR_TRANSPARENT);
         text(dc, cx + 56, 122, Graphics.FONT_NUMBER_HOT, m.glasses.format("%d"));
 
         // Coffee turns red once the user's own cutoff has passed.
@@ -373,7 +388,7 @@ class LightwellView extends WatchUi.View {
         var cy = dc.getHeight() / 2;
         var h = dc.getHeight();
 
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         line(dc, 40, "STRESS", 122);
 
         var now = "No reading";
@@ -385,7 +400,7 @@ class LightwellView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         text(dc, cx, 64, Graphics.FONT_XTINY, now);
 
-        dc.setColor((m.stretch > 0) ? Graphics.COLOR_ORANGE : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor((m.stretch > 0) ? Palette.DIM : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         text(dc, cx, cy - 6, Graphics.FONT_NUMBER_THAI_HOT, (m.tenseSecs / 60).format("%d"));
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         line(dc, cy + 38, "min tense and still", 122);
@@ -403,7 +418,9 @@ class LightwellView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx - 8, y, Graphics.FONT_XTINY, name, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx + 8, y, Graphics.FONT_TINY, value, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        // Coordinates are too long for the usual size.
+        var font = (dc.getTextWidthInPixels(value, Graphics.FONT_TINY) > 100) ? Graphics.FONT_XTINY : Graphics.FONT_TINY;
+        dc.drawText(cx + 8, y, font, value, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     private function drawDots(dc as Dc) as Void {
