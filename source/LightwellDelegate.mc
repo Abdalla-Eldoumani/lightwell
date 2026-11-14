@@ -78,10 +78,10 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
 
     // BACK asks before leaving, and is also where the day can be reset.
     function onBack() as Boolean {
-        var menu = new WatchUi.Menu2({ :title => "Session" });
-        menu.addItem(new WatchUi.MenuItem("Keep going", null, :keep, null));
-        menu.addItem(new WatchUi.MenuItem("Reset today", "Empties the well", :clear, null));
-        menu.addItem(new WatchUi.MenuItem("End session", "Save and exit", :exit, null));
+        var menu = new StyledMenu("Session");
+        menu.addItem(new StyledItem("Keep going", null, :keep));
+        menu.addItem(new StyledItem("Reset today", "Empties the well", :clear));
+        menu.addItem(new StyledItem("End session", "Save and exit", :exit));
         WatchUi.pushView(menu, new SettingsDelegate(_model, null), WatchUi.SLIDE_LEFT);
         return true;
     }
