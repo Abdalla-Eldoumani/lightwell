@@ -357,10 +357,10 @@ class LightwellModel {
         alert(Attention.TONE_ALERT_LO);
     }
 
-    // Night nudges stay off unless the user asked for them: 10 PM to 7 AM is silent.
+    // 10 PM to 7 AM is always silent.
     private function quiet() as Boolean {
         var h = System.getClockTime().hour;
-        return Day.num("night") == 0 && (h >= 22 || h < 7);
+        return h >= 22 || h < 7;
     }
 
     // True once today's cups reach the limit; never for someone who doesn't drink coffee (-1).

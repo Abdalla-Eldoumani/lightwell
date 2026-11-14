@@ -10,18 +10,17 @@ class SetupView extends WatchUi.View {
 
     // Wheelchair wording lives only in settings.
     private const ASK = ["How do you get light?", "Daylight on a workday?", "How should I nudge you?",
-                         "Coffee a day?", "Water a day?", "Tense and sitting still?", "Nudges at night?"];
+                         "Coffee a day?", "Water a day?", "Tense and sitting still?"];
     private const ANSWERS = [["Walk outside", "Sitting by a window", "I don't get much sunlight"],
                              ["Almost none", "Some", "Plenty"],
                              ["Buzz and tone", "Soft buzz", "Screen only"],
                              ["Less than 2 cups", "Less than 4 cups", "I don't drink coffee"],
-                             ["6 glasses", "8 glasses", "10 glasses"],
-                             ["Nudge after 15 min", "Nudge after 30 min", "Don't nudge"],
-                             ["No, let me sleep", "Yes"]];
+                             ["Less than 4 glasses", "Less than 8 glasses", "8 or more"],
+                             ["Nudge after 15 min", "Nudge after 30 min", "Don't nudge"]];
     // The setting each question stores, and the value behind each answer.
-    // For "words", little sun gets "Step outside".
-    const KEYS = ["words", "goal", "buzz", "cups", "h2o", "calm", "night"];
-    const VALUES = [[0, 2, 3], [10, 20, 30], [0, 1, 2], [2, 4, -1], [6, 8, 10], [15, 30, -1], [0, 1]];
+    // For "words", little sun gets "Step outside". For water, the goal sits a step above today's habit.
+    const KEYS = ["words", "goal", "buzz", "cups", "h2o", "calm"];
+    const VALUES = [[0, 2, 3], [10, 20, 30], [0, 1, 2], [2, 4, -1], [6, 8, 10], [15, 30, -1]];
     const ROW_Y = 112;          // centre of the first answer row
     const ROW_H = 28;
 

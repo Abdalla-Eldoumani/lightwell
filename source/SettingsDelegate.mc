@@ -23,7 +23,6 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
         menu.addItem(new StyledItem("Coffee a day", label(:cups), :cups));
         menu.addItem(new StyledItem("Water goal", label(:h2o), :h2o));
         menu.addItem(new StyledItem("Stress nudge", label(:calm), :calm));
-        menu.addItem(new StyledItem("Night nudges", label(:night), :night));
         menu.addItem(new StyledItem("Accessibility", wheelLabel(), :access));
         menu.addItem(new StyledItem("Preview nudge", null, :preview));
         menu.addItem(new StyledItem("Run setup again", "Go through the wizard", :setup));
@@ -37,7 +36,7 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
 
     // True for the settings that open a list of choices.
     static function picks(id as Symbol) as Boolean {
-        return id == :goal || id == :words || id == :buzz || id == :cups || id == :h2o || id == :calm || id == :night;
+        return id == :goal || id == :words || id == :buzz || id == :cups || id == :h2o || id == :calm;
     }
 
     static function wheelLabel() as String {
@@ -47,7 +46,7 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
     // The storage key behind a setting.
     static function key(id as Symbol) as String {
         var keys = { :goal => "goal", :words => "words", :buzz => "buzz", :cups => "cups",
-                     :h2o => "h2o", :calm => "calm", :night => "night" };
+                     :h2o => "h2o", :calm => "calm" };
         return keys[id] as String;
     }
 
@@ -64,9 +63,6 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
         }
         if (id == :calm) {
             return [15, 30, -1];
-        }
-        if (id == :night) {
-            return [0, 1];
         }
         return (id == :words) ? WORDS : [0, 1, 2];
     }
@@ -89,9 +85,6 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
         }
         if (id == :calm) {
             return ["After 15 min", "After 30 min", "Off"];
-        }
-        if (id == :night) {
-            return ["Off at night", "On"];
         }
         var vals = values(id);
         var out = [] as Array<String>;
