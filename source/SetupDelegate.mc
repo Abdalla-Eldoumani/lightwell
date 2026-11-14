@@ -34,9 +34,9 @@ class SetupDelegate extends WatchUi.BehaviorDelegate {
     function onTap(clickEvent as WatchUi.ClickEvent) as Boolean {
         var y = clickEvent.getCoordinates()[1];
         var top = _view.ROW_Y - _view.ROW_H / 2;
-        if (_view.step >= 1 && _view.step <= 3 && y >= top && y < top + _view.ROW_H * _view.count()) {
+        if (_view.asking() && y >= top && y < top + _view.ROW_H * _view.count()) {
             _view.sel = (y - top) / _view.ROW_H;
-        } else if (_view.step >= 1 && _view.step <= 3) {
+        } else if (_view.asking()) {
             return true;   // a tap outside the answers picks nothing
         }
         return onSelect();
@@ -44,13 +44,9 @@ class SetupDelegate extends WatchUi.BehaviorDelegate {
 
     function onSelect() as Boolean {
         var step = _view.step;
-        if (step == 1) {
-            Application.Storage.setValue("words", _view.WORDS[_view.sel]);
-        } else if (step == 2) {
-            Application.Storage.setValue("goal", 10 + 10 * _view.sel);
-        } else if (step == 3) {
-            Application.Storage.setValue("buzz", _view.sel);
-        } else if (step == 4) {
+        if (_view.asking()) {
+            Application.Storage.setValue(_view.KEYS[step - 1], _view.VALUES[step - 1][_view.sel]);
+        } else if (step > 0) {
             finish();
             return true;
         }
