@@ -5,10 +5,10 @@ You own the first minute of the app: the three questions that make it fit the pe
 ## Already on main
 
 - **First run.** Three screens, one question each, built on the watch's own menus so they look native:
-  1. "I get around": on foot, by wheelchair, mostly indoors. Sets the wording of every nudge (step outside, roll outside, find a window).
+  1. "I get around": on foot, by wheelchair, mostly indoors. Sets the wording of every nudge (step outside, find a window).
   2. "On workdays I get": almost no daylight, some, plenty. Sets the daily goal to 10, 20 or 30 minutes.
   3. "Nudge me with": buzz and tone, soft buzz, screen only.
-- A short message at the end confirms the plan ("10 min a day. Roll outside").
+- A short message at the end confirms the plan ("10 min a day").
 - **Settings** (hold UP) change the same three values later, and "Run setup again" replays the questions.
 - **Two demo items** at the bottom of settings: "Demo: new user" wipes everything and starts setup, and "Demo: month later" loads a month of sample history from source/DemoData.mc. The week and month pages are titled DEMO while it is loaded.
 

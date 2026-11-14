@@ -14,7 +14,7 @@ You own the three minutes. Show the app, do not describe it: about 20 seconds of
 |---|---|---|
 | 0:00 | Speaker | One true line about a day indoors. "Today the sun rose at 8:50, sets at 5:51 and never gets above 21 degrees. Your Garmin already measures sunlight to charge itself. Lightwell uses that for you." |
 | 0:20 | Demo | Setup: three questions. Pick "by wheelchair", "almost no daylight", "buzz and tone". |
-| 0:40 | Demo | Ring page. Press START once: the watch nudges, with the reason and "Roll outside". |
+| 0:40 | Demo | Ring page. Press START once: the watch nudges, with the reason and "Go touch grass". |
 | 1:00 | Demo | Press START until DEMO 60: the ring fills and the goal tone plays. |
 | 1:15 | Speaker | "That was day one. Here is the same person a month later." |
 | 1:20 | Demo | Hold UP, "Demo: month later". DOWN to the month page: 30 days as dots, almost empty in week one, mostly full by week four. Say it is sample data. Read out the two lines under the grid. |

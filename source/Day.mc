@@ -19,11 +19,14 @@ module Day {
         return ((mins > 0) ? mins : 20) * 60;
     }
 
-    // What a nudge asks for, indexed by the "words" setting: walk, roll, window, doorstep or blinds.
-    const ACTIONS = ["Go touch grass", "Roll outside", "Find a window", "Step outside", "Open the blinds"];
+    // What a nudge asks for, indexed by the "words" setting: walk, (retired, reads as walk), window, doorstep or blinds.
+    const ACTIONS = ["Go touch grass", "Go touch grass", "Find a window", "Step outside", "Open the blinds"];
+    // The same nudges for a wheelchair user (accessibility setting "wheel").
+    const WHEEL_ACTIONS = ["Soak in the sun", "Soak in the sun", "Find a window", "Soak in the sun", "Open the blinds"];
 
     function action() as String {
-        return ACTIONS[num("words") % ACTIONS.size()];
+        var list = (num("wheel") == 1) ? WHEEL_ACTIONS : ACTIONS;
+        return list[num("words") % list.size()];
     }
 
     // Minutes the local clock is ahead of UTC.

@@ -39,14 +39,14 @@ Pulse Ox and temperature are left out on purpose. We could not find a real job f
 ## What we are adding before the pitch
 
 - **A nudge that says why it fired.** A reminder on a timer is easy to ignore. Ours names the reason: how long you have been sitting and how much sun is left.
-- **Three settings on the watch**, opened by holding UP: goal (10, 20 or 30 minutes), wording (walk, roll, find a window), vibration (normal, soft, off).
+- **Three settings on the watch**, opened by holding UP: goal (10, 20 or 30 minutes), wording (walk, find a window), vibration (normal, soft, off).
 - **Optional:** current stress as a second trigger for the same nudge.
 
 ## Inclusivity
 
 The mentor asked us to consider women, people with disabilities and different lifestyles. The three settings are how we do that.
 
-- **Wheelchair users and limited mobility.** With wording set to "roll" or "find a window", no prompt says "walk" or "step". Light through a window counts toward the goal, so the goal can be met without going outside.
+- **Wheelchair users and limited mobility.** With the wheelchair setting on, no prompt says "walk" or "step". Light through a window counts toward the goal, so the goal can be met without going outside.
 - **Sensory-sensitive.** Vibration can be soft or off.
 - **Different days.** There is no fixed schedule. Nudges depend on the sun and on how long you have been still, so shift workers are not assumed to work 9 to 5. The goal can be lowered to 10 minutes.
 

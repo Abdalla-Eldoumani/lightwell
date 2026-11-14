@@ -8,7 +8,7 @@ class SetupView extends WatchUi.View {
     var step as Number = 0;     // 0 is the welcome, 1 to 3 the questions, 4 the plan
     var sel as Number = 0;      // highlighted answer
 
-    // The roll wording lives only in settings; the guide offers walk or window.
+    // Wheelchair wording lives only in settings.
     private const ASK = ["How do you get light?", "Daylight on a workday?", "How should I nudge you?"];
     private const ANSWERS = [["Walk outside", "Sitting by a window", "I don't get much sunlight"],
                              ["Almost none", "Some", "Plenty"],
