@@ -1,6 +1,7 @@
 import Toybox.Application;
 import Toybox.Attention;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.WatchUi;
 
 class SettingsDelegate extends WatchUi.Menu2InputDelegate {
@@ -57,6 +58,19 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
         }
         if (id == :water || id == :lessWater) {
             _model.addGlass((id == :water) ? 1 : -1);
+            WatchUi.popView(WatchUi.SLIDE_RIGHT);
+            return;
+        }
+        if (id == :keep) {
+            WatchUi.popView(WatchUi.SLIDE_RIGHT);
+            return;
+        }
+        if (id == :exit) {
+            // The app saves the day as it stops.
+            System.exit();
+        }
+        if (id == :midday) {
+            _model.midday();
             WatchUi.popView(WatchUi.SLIDE_RIGHT);
             return;
         }
