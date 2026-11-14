@@ -6,7 +6,7 @@ import Toybox.WatchUi;
 
 class LightwellView extends WatchUi.View {
 
-    private const PAGES = 5;
+    private const PAGES = 7;
 
     private var _model as LightwellModel;
     private var _timer as Timer.Timer?;
@@ -35,18 +35,29 @@ class LightwellView extends WatchUi.View {
         var m = _model;
         m.tick();
         if (m.card != 0) {
-            var nudge = m.card == 1;
+            var kind = m.card;
             m.card = 0;
-            var title = "Well is full";
-            var lines = [(m.goalSecs / 60).format("%d") + " min of daylight", "Streak " + m.streak().format("%d")];
-            if (nudge) {
-                title = Day.action();
-                lines = [m.why, m.sunUp() ? "Sun left " + m.hm(m.setMin - m.nowMin()) : ""];
+            // Sit nudges and tense spells can be put off; the other two only inform.
+            var nudge = kind == 1 || kind == 3;
+            var title = Day.action();
+            var lines = [m.why, m.sunUp() ? "Sun left " + m.hm(m.setMin - m.nowMin()) : ""];
+            if (kind == 2) {
+                title = "Well is full";
+                lines = [(m.goalSecs / 60).format("%d") + " min of daylight", "Streak " + m.streak().format("%d")];
+            } else if (kind == 3) {
+                lines = ["Tense and still", "for " + m.spell.format("%d") + " min"];
+            } else if (kind == 4) {
+                title = "Past your cutoff";
+                lines = ["Coffee after " + Day.cutoffText(), "Water instead?"];
             }
             WatchUi.pushView(new CardView(title, lines, nudge), new CardDelegate(m, nudge), WatchUi.SLIDE_UP);
             return;
         }
         WatchUi.requestUpdate();
+    }
+
+    function page() as Number {
+        return _page;
     }
 
     function turn(by as Number) as Void {
@@ -65,8 +76,12 @@ class LightwellView extends WatchUi.View {
         } else if (_page == 1) {
             drawSun(dc);
         } else if (_page == 2) {
-            drawWeek(dc);
+            drawDrinks(dc);
         } else if (_page == 3) {
+            drawStress(dc);
+        } else if (_page == 4) {
+            drawWeek(dc);
+        } else if (_page == 5) {
             drawMonth(dc);
         } else {
             drawSensors(dc);
@@ -315,12 +330,71 @@ class LightwellView extends WatchUi.View {
         } else if (m.baroDelta >= 1.5) {
             trend = "Rising";
         }
-        row(dc, 72, "SOLAR", (m.hasSolar || m.demo >= 0) ? m.lightPct.format("%d") + "%" : "None");
-        row(dc, 98, "HEART", (m.hr > 0) ? m.hr.format("%d") + " bpm" : "...");
-        row(dc, 124, "GPS", m.hasFix ? "Locked" : "Searching");
-        row(dc, 150, "COMPASS", m.hasHeading ? compassWord(m.heading) : "...");
-        row(dc, 176, "PRESSURE", m.hasBaro ? trend : "...");
-        row(dc, 202, "MOTION", m.moving ? "Moving" : "Still");
+        row(dc, 66, "SOLAR", (m.hasSolar || m.demo >= 0) ? m.lightPct.format("%d") + "%" : "None");
+        row(dc, 89, "HEART", (m.hr > 0) ? m.hr.format("%d") + " bpm" : "...");
+        row(dc, 112, "GPS", m.hasFix ? "Locked" : "Searching");
+        row(dc, 135, "COMPASS", m.hasHeading ? compassWord(m.heading) : "...");
+        row(dc, 158, "PRESSURE", m.hasBaro ? trend : "...");
+        row(dc, 181, "MOTION", m.moving ? "Moving" : "Still");
+        row(dc, 204, "STRESS", (m.stress >= 0) ? m.stress.format("%d") : "...");
+    }
+
+    // Coffee and water, logged by hand. A tap on either side adds one.
+    private function drawDrinks(dc as Dc) as Void {
+        var m = _model;
+        var cx = dc.getWidth() / 2;
+        var late = m.pastCutoff();
+
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        line(dc, 40, "DRINKS", 122);
+        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine(cx, 70, cx, 178);
+
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx - 56, 78, Graphics.FONT_XTINY, "COFFEE");
+        text(dc, cx + 56, 78, Graphics.FONT_XTINY, "WATER");
+        text(dc, cx + 56, 164, Graphics.FONT_XTINY, "of " + Day.opt("h2o", 8).format("%d"));
+        line(dc, 204, "Tap a side to add", 122);
+
+        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx + 56, 122, Graphics.FONT_NUMBER_HOT, m.glasses.format("%d"));
+
+        // Coffee turns red once the user's own cutoff has passed.
+        dc.setColor(late ? Graphics.COLOR_RED : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx - 56, 122, Graphics.FONT_NUMBER_HOT, m.cups.format("%d"));
+        dc.setColor(late ? Graphics.COLOR_RED : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx - 56, 164, Graphics.FONT_XTINY, (late ? "past " : "until ") + Day.cutoffText());
+    }
+
+    // Minutes spent tense while sitting still today, and the spell running now.
+    private function drawStress(dc as Dc) as Void {
+        var m = _model;
+        var cx = dc.getWidth() / 2;
+        var cy = dc.getHeight() / 2;
+        var h = dc.getHeight();
+
+        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        line(dc, 40, "STRESS", 122);
+
+        var now = "No reading";
+        if (m.stress >= 0) {
+            now = "Stress " + m.stress.format("%d") + (m.moving ? ", moving" : ", still");
+        } else if (m.hr > 0) {
+            now = "Pulse " + m.hr.format("%d") + (m.moving ? ", moving" : ", still");
+        }
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx, 64, Graphics.FONT_XTINY, now);
+
+        dc.setColor((m.stretch > 0) ? Graphics.COLOR_ORANGE : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx, cy - 6, Graphics.FONT_NUMBER_THAI_HOT, (m.tenseSecs / 60).format("%d"));
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        line(dc, cy + 38, "min tense and still", 122);
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        line(dc, h - 64, (m.stretch > 0) ? "This spell " + (m.stretch / 60).format("%d") + " min" : "No spell right now", 122);
+        var after = Day.opt("calm", 15);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        text(dc, cx, h - 40, Graphics.FONT_XTINY, (after > 0) ? "Nudge after " + after.format("%d") + " min" : "Nudge off");
     }
 
     // Name on the left of the centre line in grey, reading on the right in white.
