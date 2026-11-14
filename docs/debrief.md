@@ -1,6 +1,6 @@
 # Lightwell debrief
 
-Tech Thursday x Garmin Hackathon, Calgary, November 14, 2026. Target: fenix 7 Pro (Connect IQ API 5.2, 260 x 260 round MIP screen). The app was called Daylight until the afternoon, and the code still uses that name.
+Tech Thursday x Garmin Hackathon, Calgary, November 14, 2026. Target: fenix 7 Pro (Connect IQ API 5.2, 260 x 260 round MIP screen). The app was called Daylight until the afternoon.
 
 This file records what we built, what we decided to add, what we set aside, and why. The schedule and the pitch are in demo-plan.md.
 
@@ -14,14 +14,14 @@ The brief asked us to pick one thing we struggle with ourselves. We picked this 
 
 | Feature | What it does | Code |
 |---|---|---|
-| Light ring | Minutes of light today against a 20-minute goal, sun time left, streak (one missed day is forgiven) | source/DaylightView.mc, drawRing |
-| Sun finder | Where the sun is from where you stand, turned by the compass, plus its height and the sunset time | drawSun; sun position in DaylightModel.updateSun (NOAA formulas) |
+| Light ring | Minutes of light today against a 20-minute goal, sun time left, streak (one missed day is forgiven) | source/LightwellView.mc, drawRing |
+| Sun finder | Where the sun is from where you stand, turned by the compass, plus its height and the sunset time | drawSun; sun position in LightwellModel.updateSun (NOAA formulas) |
 | Week | Six finished days and today, drawn against the goal line | drawWeek; history in source/Day.mc |
 | Sensors | Live readings: solar, heart rate, GPS, barometer trend, movement, compass | drawSensors |
-| Nudges | Vibrates when you have been sitting, the sun is up and the ring is not full. Asks you to uncover the watch when you are walking outside but the sensor reads dark | DaylightModel.checkNudge, checkSleeve |
-| Background | Reads the sensor every 5 minutes while the app is closed, the shortest interval Connect IQ allows | source/DaylightService.mc |
+| Nudges | Vibrates when you have been sitting, the sun is up and the ring is not full. Asks you to uncover the watch when you are walking outside but the sensor reads dark | LightwellModel.checkNudge, checkSleeve |
+| Background | Reads the sensor every 5 minutes while the app is closed, the shortest interval Connect IQ allows | source/LightwellService.mc |
 | Day rollover | Files the finished day into history, settles the streak, clears today's counters | Day.roll() |
-| Demo mode | START steps a labelled fake light level (off, 0, 15, 60, 100) and runs time 60 times faster | DaylightDelegate.mc, DaylightModel.cycleDemo |
+| Demo mode | START steps a labelled fake light level (off, 0, 15, 60, 100) and runs time 60 times faster | LightwellDelegate.mc, LightwellModel.cycleDemo |
 
 ## What each sensor is for
 
