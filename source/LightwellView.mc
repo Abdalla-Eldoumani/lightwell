@@ -53,8 +53,11 @@ class LightwellView extends WatchUi.View {
             } else if (kind == 5) {
                 title = "Midday check-in";
                 lines = ["The day is half over", "and your well is low.",
-                    ["A short stroll outside?", "A short roll outside?", "A while by the window?",
-                     "A step outside the door?", "Open the blinds a while?"][Day.num("words") % 5]];
+                    ((Day.num("wheel") == 1)
+                        ? ["A while in the sun?", "A while in the sun?", "A while by the window?",
+                           "A while in the sun?", "Open the blinds a while?"]
+                        : ["A short stroll outside?", "A short stroll outside?", "A while by the window?",
+                           "A step outside the door?", "Open the blinds a while?"])[Day.num("words") % 5]];
             } else if (kind == 4) {
                 title = "Past your cutoff";
                 lines = ["Coffee after " + Day.cutoffText(), "Water instead?"];
