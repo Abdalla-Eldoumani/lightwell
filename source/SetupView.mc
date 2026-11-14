@@ -2,24 +2,37 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// The first-run guide: a welcome, three questions one per screen, then the plan.
+// The first-run guide: a welcome, one question per screen, then the plan.
 class SetupView extends WatchUi.View {
 
-    var step as Number = 0;     // 0 is the welcome, 1 to 3 the questions, 4 the plan
+    var step as Number = 0;     // 0 is the welcome, then one per question, then the plan
     var sel as Number = 0;      // highlighted answer
 
     // The roll wording lives only in settings; the guide offers walk or window.
-    private const ASK = ["How do you get light?", "Daylight on a workday?", "How should I nudge you?"];
+    private const ASK = ["How do you get light?", "Daylight on a workday?", "How should I nudge you?",
+                         "Last coffee of the day?", "Water a day?", "Tense and sitting still?", "Nudges at night?"];
     private const ANSWERS = [["Walk outside", "Sitting by a window", "I don't get much sunlight"],
                              ["Almost none", "Some", "Plenty"],
-                             ["Buzz and tone", "Soft buzz", "Screen only"]];
-    const WORDS = [0, 2, 3];    // the "words" setting each first answer stores; little sun gets "Step outside"
+                             ["Buzz and tone", "Soft buzz", "Screen only"],
+                             ["By noon", "By 2 PM", "By 4 PM"],
+                             ["6 glasses", "8 glasses", "10 glasses"],
+                             ["Nudge after 15 min", "Nudge after 30 min", "Don't nudge"],
+                             ["No, let me sleep", "Yes"]];
+    // The setting each question stores, and the value behind each answer.
+    // For "words", little sun gets "Step outside".
+    const KEYS = ["words", "goal", "buzz", "cutoff", "h2o", "calm", "night"];
+    const VALUES = [[0, 2, 3], [10, 20, 30], [0, 1, 2], [12, 14, 16], [6, 8, 10], [15, 30, -1], [0, 1]];
     const ROW_Y = 112;          // centre of the first answer row
     const ROW_H = 28;
 
     // How many answers the current question has.
     function count() as Number {
-        return (step >= 1 && step <= 3) ? ANSWERS[step - 1].size() : 1;
+        return asking() ? ANSWERS[step - 1].size() : 1;
+    }
+
+    // True while a question is on screen.
+    function asking() as Boolean {
+        return step >= 1 && step <= ASK.size();
     }
 
     private var _logo as WatchUi.BitmapResource or Graphics.BitmapReference or Null;
@@ -54,7 +67,7 @@ class SetupView extends WatchUi.View {
             button(dc, 204, "Start");
             return;
         }
-        if (step > 3) {
+        if (step > ASK.size()) {
             put(dc, 90, Graphics.FONT_MEDIUM, "You are set");
             put(dc, 124, Graphics.FONT_TINY, (Day.goalSecs() / 60).format("%d") + " min of light a day");
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
@@ -79,9 +92,10 @@ class SetupView extends WatchUi.View {
             dc.setColor((i == sel) ? Graphics.COLOR_BLACK : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
             put(dc, y, Graphics.FONT_TINY, answers[i]);
         }
-        for (var i = 0; i < 3; i++) {
+        var n = ASK.size();
+        for (var i = 0; i < n; i++) {
             dc.setColor((i == step - 1) ? Graphics.COLOR_YELLOW : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(cx - 12 + i * 12, 226, 3);
+            dc.fillCircle(cx - (n - 1) * 6 + i * 12, 226, 3);
         }
     }
 
