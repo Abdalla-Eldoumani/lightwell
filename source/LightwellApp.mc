@@ -36,7 +36,8 @@ class LightwellApp extends Application.AppBase {
         m.start();
         _model = m;
         if (Day.num("setup") == 0) {
-            return [ SetupDelegate.menu(0), new SetupDelegate(m, 0, false) ];
+            var setup = new SetupView();
+            return [ setup, new SetupDelegate(setup, m, false) ];
         }
         var view = new LightwellView(m);
         return [ view, new LightwellDelegate(view, m) ];
