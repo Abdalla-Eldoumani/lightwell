@@ -51,7 +51,18 @@ class LightwellModel {
     var seeded as Boolean = false;                     // the history is demo data
     var note as String = "";
     var why as String = "";         // the reason behind the nudge on screen
-    var card as Number = 0;         // 1 nudge, 2 goal reached: the view shows it full screen
+    // 1 sit nudge, 2 goal reached, 3 tense spell, 4 coffee past the cutoff: the view shows it full screen
+    var card as Number = 0;
+
+    // Logged by hand
+    var cups as Number = 0;
+    var glasses as Number = 0;
+
+    // Stress: time spent tense while sitting still
+    var stress as Number = -1;      // 0 to 100, -1 with no reading
+    var tenseSecs as Number = 0;    // today
+    var stretch as Number = 0;      // the current unbroken spell, in seconds
+    var spell as Number = 0;        // minutes named on the stress card
 
     private var _streak as Number = 0;
 
@@ -88,6 +99,7 @@ class LightwellModel {
         _ticks += 1;
         readLight();
         readBody();
+        readStress();
         if (_ticks % 30 == 1) {
             updateSun();
             if (Day.today() != _day) {
@@ -156,6 +168,9 @@ class LightwellModel {
         lightSecs = 0;
         moveSecs = 0;
         hrBefore = 0;
+        cups = 0;
+        glasses = 0;
+        tenseSecs = 0;
         setNote("Day reset");
         save();
     }
@@ -285,6 +300,58 @@ class LightwellModel {
         alert(Attention.TONE_ALERT_HI);
     }
 
+    private function readStress() as Void {
+        var info = ActivityMonitor.getInfo();
+        var s = (info has :stressScore) ? info.stressScore : null;
+        stress = (s != null) ? s : -1;
+        // With no stress reading, a fast pulse while sitting still stands in for it.
+        var tense = (stress >= 0) ? stress >= 60 : hr >= 100;
+        if (tense && !moving) {
+            stretch += 1;
+            tenseSecs += 1;
+        } else {
+            stretch = 0;
+        }
+        var after = Day.opt("calm", 15);
+        if (after > 0 && stretch == after * 60 && !quiet()) {
+            spell = after;
+            card = 3;
+            alert(Attention.TONE_ALERT_LO);
+        }
+    }
+
+    // Stands in for a tense 20 minutes at a desk, which the simulator cannot produce.
+    function demoTense() as Void {
+        tenseSecs += 1200;
+        spell = 20;
+        card = 3;
+        alert(Attention.TONE_ALERT_LO);
+    }
+
+    // Night nudges stay off unless the user asked for them: 10 PM to 7 AM is silent.
+    private function quiet() as Boolean {
+        var h = System.getClockTime().hour;
+        return Day.num("night") == 0 && (h >= 22 || h < 7);
+    }
+
+    function pastCutoff() as Boolean {
+        return System.getClockTime().hour >= Day.opt("cutoff", 14);
+    }
+
+    function addCup(by as Number) as Void {
+        cups = (cups + by > 0) ? cups + by : 0;
+        save();
+        if (by > 0 && pastCutoff()) {
+            card = 4;
+            alert(Attention.TONE_ALERT_LO);
+        }
+    }
+
+    function addGlass(by as Number) as Void {
+        glasses = (glasses + by > 0) ? glasses + by : 0;
+        save();
+    }
+
     // "Later" on the nudge: ask again in 10 minutes instead of 30.
     function snooze() as Void {
         _lastNudge = _ticks - 1200;
@@ -387,6 +454,9 @@ class LightwellModel {
 
     // Nudge setting: 0 buzz and tone, 1 soft buzz, 2 screen only.
     function alert(tone as Attention.Tone) as Void {
+        if (quiet()) {
+            return;
+        }
         var level = Day.num("buzz");
         if (level < 2 && (Attention has :vibrate)) {
             var pulse = (level == 1) ? new Attention.VibeProfile(25, 150) : new Attention.VibeProfile(60, 400);
@@ -403,6 +473,9 @@ class LightwellModel {
         goalSecs = Day.goalSecs();
         lightSecs = Day.num("light");
         moveSecs = Day.num("move");
+        cups = Day.num("cups");
+        glasses = Day.num("glasses");
+        tenseSecs = Day.num("tense");
         _streak = Day.num("streak");
         hist = Day.history();
         seeded = Day.num("seeded") == 1;
@@ -411,6 +484,9 @@ class LightwellModel {
     function save() as Void {
         Application.Storage.setValue("light", lightSecs);
         Application.Storage.setValue("move", moveSecs);
+        Application.Storage.setValue("cups", cups);
+        Application.Storage.setValue("glasses", glasses);
+        Application.Storage.setValue("tense", tenseSecs);
         // Tells the background service the app is open and counting.
         Application.Storage.setValue("seen", Time.now().value());
     }
