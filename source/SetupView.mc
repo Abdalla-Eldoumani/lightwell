@@ -47,7 +47,7 @@ class SetupView extends WatchUi.View {
 
     function onUpdate(dc as Dc) as Void {
         var cx = dc.getWidth() / 2;
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.setColor(Palette.NAVY, Palette.NAVY);
         dc.clear();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -82,27 +82,27 @@ class SetupView extends WatchUi.View {
         for (var i = 0; i < answers.size(); i++) {
             var y = ROW_Y + i * ROW_H;
             if (i == sel) {
-                dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
                 var pw = dc.getTextWidthInPixels(answers[i], Graphics.FONT_TINY) + 28;
                 if (pw < 180) {
                     pw = 180;   // long answers get a wider highlight
                 }
                 dc.fillRoundedRectangle(cx - pw / 2, y - 13, pw, 26, 13);
             }
-            dc.setColor((i == sel) ? Graphics.COLOR_BLACK : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.setColor((i == sel) ? Palette.NAVY : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
             put(dc, y, Graphics.FONT_TINY, answers[i]);
         }
         var n = ASK.size();
         for (var i = 0; i < n; i++) {
-            dc.setColor((i == step - 1) ? Graphics.COLOR_YELLOW : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor((i == step - 1) ? Palette.GOLD : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(cx - (n - 1) * 6 + i * 12, 226, 3);
         }
     }
 
     private function button(dc as Dc, y as Number, s as String) as Void {
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(dc.getWidth() / 2 - 60, y - 15, 120, 30, 15);
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Palette.NAVY, Graphics.COLOR_TRANSPARENT);
         put(dc, y, Graphics.FONT_TINY, s);
     }
 
