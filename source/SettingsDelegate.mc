@@ -17,12 +17,12 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             return (Day.goalSecs() / 60).format("%d") + " min";
         }
         if (id == :words) {
-            return ["Walk", "Roll", "Window"][Day.num("words") % 3];
+            return ["Walk", "Roll", "Window", "Doorstep", "Blinds"][Day.num("words") % 5];
         }
         return ["Buzz and tone", "Soft buzz", "Screen only"][Day.num("buzz") % 3];
     }
 
-    // Each press steps a setting to its next value: there are only three of each.
+    // Each press steps a setting to its next value: three or five of each.
     function onSelect(item as WatchUi.MenuItem) as Void {
         var id = item.getId() as Symbol;
         if (id == :clear) {
@@ -53,7 +53,7 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             Application.Storage.setValue("goal", (mins > 30) ? 10 : mins);
             _model.goalSecs = Day.goalSecs();
         } else if (id == :words) {
-            Application.Storage.setValue("words", (Day.num("words") + 1) % 3);
+            Application.Storage.setValue("words", (Day.num("words") + 1) % 5);
         } else {
             Application.Storage.setValue("buzz", (Day.num("buzz") + 1) % 3);
         }

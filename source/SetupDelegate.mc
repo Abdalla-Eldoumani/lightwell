@@ -18,35 +18,39 @@ class SetupDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onNextPage() as Boolean {
-        _view.sel = (_view.sel + 1) % 3;
+        _view.sel = (_view.sel + 1) % _view.count();
         WatchUi.requestUpdate();
         return true;
     }
 
     function onPreviousPage() as Boolean {
-        _view.sel = (_view.sel + 2) % 3;
+        var n = _view.count();
+        _view.sel = (_view.sel + n - 1) % n;
         WatchUi.requestUpdate();
         return true;
     }
 
-    // Tapping an answer picks it; the rows start at y 104 and are 32 high.
+    // Tapping an answer picks it.
     function onTap(clickEvent as WatchUi.ClickEvent) as Boolean {
         var y = clickEvent.getCoordinates()[1];
-        if (_view.step < 3 && y >= 104 && y < 200) {
-            _view.sel = (y - 104) / 32;
+        var top = _view.ROW_Y - _view.ROW_H / 2;
+        if (_view.step >= 1 && _view.step <= 3 && y >= top && y < top + _view.ROW_H * _view.count()) {
+            _view.sel = (y - top) / _view.ROW_H;
+        } else if (_view.step >= 1 && _view.step <= 3) {
+            return true;   // a tap outside the answers picks nothing
         }
         return onSelect();
     }
 
     function onSelect() as Boolean {
         var step = _view.step;
-        if (step == 0) {
-            Application.Storage.setValue("words", _view.sel);
-        } else if (step == 1) {
-            Application.Storage.setValue("goal", 10 + 10 * _view.sel);
+        if (step == 1) {
+            Application.Storage.setValue("words", _view.WORDS[_view.sel]);
         } else if (step == 2) {
+            Application.Storage.setValue("goal", 10 + 10 * _view.sel);
+        } else if (step == 3) {
             Application.Storage.setValue("buzz", _view.sel);
-        } else {
+        } else if (step == 4) {
             finish();
             return true;
         }
@@ -56,7 +60,7 @@ class SetupDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    // BACK returns to the previous question; on the first one it leaves as usual.
+    // BACK returns to the previous screen; on the welcome it leaves as usual.
     function onBack() as Boolean {
         if (_view.step == 0) {
             return false;
