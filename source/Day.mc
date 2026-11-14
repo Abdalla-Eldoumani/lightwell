@@ -41,6 +41,18 @@ module Day {
         return (Time.now().value() + offsetMin() * 60) / 86400;
     }
 
+    // A setting, or its default until the user picks one.
+    function opt(key as String, dflt as Number) as Number {
+        var v = num(key);
+        return (v != 0) ? v : dflt;
+    }
+
+    // The last hour for coffee, as the clock shows it: 12, 14 or 16.
+    function cutoffText() as String {
+        var h = opt("cutoff", 14);
+        return ((h > 12) ? h - 12 : h).format("%d") + " PM";
+    }
+
     function num(key as String) as Number {
         var v = Application.Storage.getValue(key);
         return (v instanceof Number) ? v : 0;
@@ -100,6 +112,9 @@ module Day {
         Application.Storage.setValue("day", now);
         Application.Storage.setValue("light", 0);
         Application.Storage.setValue("move", 0);
+        Application.Storage.setValue("cups", 0);
+        Application.Storage.setValue("glasses", 0);
+        Application.Storage.setValue("tense", 0);
     }
 
 }
