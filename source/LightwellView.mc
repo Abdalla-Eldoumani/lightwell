@@ -32,7 +32,20 @@ class LightwellView extends WatchUi.View {
     }
 
     function tick() as Void {
-        _model.tick();
+        var m = _model;
+        m.tick();
+        if (m.card != 0) {
+            var nudge = m.card == 1;
+            m.card = 0;
+            var title = "Well is full";
+            var lines = [(m.goalSecs / 60).format("%d") + " min of daylight", "Streak " + m.streak().format("%d")];
+            if (nudge) {
+                title = Day.action();
+                lines = [m.why, m.sunUp() ? "Sun left " + m.hm(m.setMin - m.nowMin()) : ""];
+            }
+            WatchUi.pushView(new CardView(title, lines, nudge), new CardDelegate(m, nudge), WatchUi.SLIDE_UP);
+            return;
+        }
         WatchUi.requestUpdate();
     }
 
