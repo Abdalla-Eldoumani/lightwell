@@ -4,59 +4,57 @@ How we finish Lightwell before pitching starts at 4:00 PM, and how we present it
 
 Rule: build on the app that already works. Anything new must be showable in the simulator in under 30 seconds. If it can't be, cut it.
 
-## What we are adding, and only this
+## What we are building
 
-1. **A nudge that says why it fired.** "Sitting an hour, 4h of sun left. Step outside." The triggers stay as they are (move bar up, sun up, ring not full). The reason goes in the text.
-2. **Three settings on the watch**, reached by holding UP: goal (10, 20 or 30 minutes), wording (walk, roll, find a window), vibration (normal, soft, off). This is our answer to the mentor's question about people with disabilities and different lifestyles.
-3. **Optional, only if 1 and 2 are done by 2:00:** current stress as a second trigger for the same nudge.
+Three streams. The app streams are about polish: how it looks, how a nudge lands, and how setup fits the app to the person.
+
+1. **Screens and nudges.** The four pages, the nudge that says why it fired, tone and vibration, and "goal met" shown as a change of shape.
+2. **Setup and personal settings.** Three questions on first run (how you get around, how much daylight you get, how to nudge you) that set the wording, the goal and the alerts. The same values in settings on hold UP.
+3. **Pitch.** Three slides and a 3-minute script built around the live demo.
 
 ## What we cut, and why
 
-- **Coffee, water and the caffeine cutoff.** They are typed in by hand and use no sensor, and a caffeine tracker is already in the Connect IQ store. Our pitch is that the watch measures the habit with no input.
-- **The breathing guide.** Garmin watches already have breathing exercises.
-- **The ten-question setup.** Ten screens before the user sees anything. The defaults work on first launch and the three settings cover the rest.
-- **One file per page and the 17-key settings schema.** They rewrite code that works and give a judge nothing to see.
-- **A stress page.** The fenix7pro simulator has no stress history, so the page would show invented data.
-- **Three tones for every message.**
+- **Coffee, water and the caffeine cutoff.** Typed in by hand, no sensor, and a caffeine tracker is already in the Connect IQ store.
+- **The breathing guide and a stress page.** Garmin watches already have breathing exercises, and the fenix7pro simulator has no stress history.
+- **A ten-question setup.** Three questions take ten seconds and change everything the user sees.
+- **One file per page and a 17-key settings schema.**
 
 ## Who does what
 
-One person edits the files in source/. Everyone else works in the simulator, on the pitch, or with the mentor, so no two people change the same file.
-
-| Who | Owns | Delivers | Handoff |
+| Who | Stream | Owns | Handoff |
 |---|---|---|---|
-| Abdalla | Everything in source/ and resources/, every merge to main | Fixes from the first run-through, the settings menu, the nudge with its reason | handoff-build.md |
-| Yaseen | Simulator and demo | Runs every build, screenshots each page, tests the background event, drives the demo, records the backup video | handoff-simulator.md |
-| David | Pitch | 3-minute script, slides, answers to likely questions, docs updated to what shipped | handoff-pitch.md |
-| TomCruiseTorpedo | Mentor and wording | Sensor readings from Josh for the light threshold, the walk, roll and window texts, the name check | handoff-mentor.md |
+| Abdalla | 1. Screens and nudges | LightwellView, LightwellModel, LightwellDelegate, LightwellApp, LightwellService, Day; every merge | handoff-build.md |
+| David | 2. Setup and settings | SetupDelegate, SettingsDelegate | handoff-setup.md |
+| TomCruiseTorpedo | 3. Pitch | Slides, script, rehearsals | handoff-pitch.md |
+| Yaseen | Simulator for 1 and 2, live demo for 3 | Screenshots, checklist, backup recording | handoff-simulator.md |
+
+Swap names if the roles do not suit. The file ownership is what matters: no two people edit the same file.
 
 ## Timeline
 
 | Time | What happens |
 |---|---|
-| 1:00 to 1:15 | Everyone reads their handoff. Yaseen runs the current build and sends screenshots of all four pages to Abdalla |
-| 1:15 to 2:15 | Build: fixes, settings menu, nudge with reason. Pitch draft. Josh's numbers |
-| 2:15 to 2:30 | Everything on main. Full demo path in the simulator |
-| 2:30 | Feature freeze. After this, only fixes for bugs that break the demo |
-| 2:30 to 3:00 | Backup recording. Docs and README updated to what shipped |
-| 3:00 to 3:45 | Three timed rehearsals |
-| 4:00 | Pitch |
+| Now | Everyone pulls main and reads their handoff. Yaseen sends screenshots |
+| to 2:45 | Build and polish. Slides and script |
+| 2:45 | Feature freeze. After this, only fixes for bugs that break the demo |
+| 2:45 to 3:05 | Backup recording. Docs updated to what shipped |
+| 3:05 to 3:50 | Three timed rehearsals |
+| 4:00 | Pitching starts |
 
-## Presentation: 3 minutes, then questions
+## What the simulator can show
 
-| Time | Part |
-|---|---|
-| 0:00 | **Hook.** One true line from one of us about a day indoors. Then: "Today in Calgary the sun rose at 8:50, sets at 5:51, and never gets above 21 degrees." |
-| 0:25 | **Idea.** "Garmin built a sensor that charges the watch with sunlight. We use it for the person wearing it." |
-| 0:40 | **Live demo, 90 seconds.** The ring fills and the watch buzzes at the goal. The nudge fires and says why. The sun finder turns with the compass. The week page (say "sample data"). The sensors page, naming each sensor's job. The wording setting switched to "roll". |
-| 2:10 | **Measuring it.** Days at goal per week, over 30 days. |
-| 2:35 | **Limits.** Simulator only. The light threshold is not calibrated. In the background one reading stands for 5 minutes. |
-| 2:50 | **Close.** One line to remember. |
+- **Vibration.** The simulator window shakes when the app vibrates, according to Garmin's developer forum. https://forums.garmin.com/developer/connect-iq/f/discussion/272906/how-to-test-vibration-with-connect-iq-device-simulator
+- **Sound.** One forum report says the simulator plays tones. It did not say on which system, so test it on the demo laptop. https://forums.garmin.com/developer/connect-iq/f/discussion/317894/why-do-tones-not-play-on-the-watch-but-do-in-the-simulator
+- **Not shown:** the background service, unless a background event is triggered from the Simulation menu.
 
-Do not say:
+## Design notes from the research
 
-- That we are the first app to read the solar sensor. A watch face called SolarDay already reads it.
-- Anything about UV or vitamin D. The sensor cannot measure either.
-- That light lowers stress. We have no source for it.
+- Put the whole answer on one screen and keep navigation flat. https://developer.apple.com/design/human-interface-guidelines/designing-for-watchos
+- Do one or two jobs, and make every task finish in seconds. https://developer.android.com/design/ui/wear/guides/get-started/design-for-wearables/principles
+- Progress that hugs the round edge, bold type for the one number that matters, two or three colours. https://android-developers.googleblog.com/2025/08/introducing-material-3-expressive-for-wear-os.html
+- A missed day should not wipe out progress, and the app should say when you have done enough. One reviewer's account of the Gentler Streak app. https://digitaltrends.com/mobile/apple-watch-fitness-recovery-problem-gentler-streak-app-fix
+- We did not find a source specific to the second half of 2026, and the translucent look of watchOS 26 does not apply to a 64-colour screen.
 
-Backup: a screen recording of the demo path, in case the simulator fails on stage.
+## Presentation
+
+Three minutes, then questions. The script, the demo steps, the numbers and the answers are in handoff-pitch.md. Backup: a screen recording of the demo path.

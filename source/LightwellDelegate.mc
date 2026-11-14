@@ -24,7 +24,7 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    // START steps the demo light level; hold UP (menu) clears today.
+    // START steps the demo light level; hold UP opens the settings.
     function onSelect() as Boolean {
         _model.cycleDemo();
         WatchUi.requestUpdate();
@@ -32,8 +32,15 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onMenu() as Boolean {
-        _model.resetToday();
-        WatchUi.requestUpdate();
+        var menu = new WatchUi.Menu2({ :title => "Settings" });
+        menu.addItem(new WatchUi.MenuItem("Daily goal", SettingsDelegate.label(:goal), :goal, null));
+        menu.addItem(new WatchUi.MenuItem("Wording", SettingsDelegate.label(:words), :words, null));
+        menu.addItem(new WatchUi.MenuItem("Nudges", SettingsDelegate.label(:buzz), :buzz, null));
+        menu.addItem(new WatchUi.MenuItem("Run setup again", null, :setup, null));
+        menu.addItem(new WatchUi.MenuItem("Clear today", null, :clear, null));
+        menu.addItem(new WatchUi.MenuItem("Demo: new user", "Wipes everything", :fresh, null));
+        menu.addItem(new WatchUi.MenuItem("Demo: month later", "Loads sample data", :month, null));
+        WatchUi.pushView(menu, new SettingsDelegate(_model), WatchUi.SLIDE_LEFT);
         return true;
     }
 

@@ -10,7 +10,19 @@ module Day {
     // solarIntensity runs 0 to 100. 5 is a first guess for "brighter than a room";
     // the real cut-off needs a watch under office light and under open sky.
     const LIGHT_MIN = 5;
-    const GOAL_SECS = 1200;
+    // Finished days kept in the history. With today that makes a 30-day month.
+    const DAYS = 29;
+
+    // The daily goal is a setting; 20 minutes until the user picks another.
+    function goalSecs() as Number {
+        var mins = num("goal");
+        return ((mins > 0) ? mins : 20) * 60;
+    }
+
+    // What a nudge asks for, in the wording the user chose: walk, roll or window.
+    function action() as String {
+        return ["Step outside", "Roll outside", "Find a window"][num("words") % 3];
+    }
 
     // Minutes the local clock is ahead of UTC.
     function offsetMin() as Number {
@@ -34,6 +46,16 @@ module Day {
         return (v instanceof Number) ? v : 0;
     }
 
+    // Minutes of light on each finished day, yesterday first, always DAYS long.
+    function history() as Array<Number> {
+        var stored = Application.Storage.getValue("hist");
+        var hist = new [DAYS] as Array<Number>;
+        for (var i = 0; i < DAYS; i++) {
+            hist[i] = ((stored instanceof Array) && i < stored.size()) ? (stored as Array<Number>)[i] : 0;
+        }
+        return hist;
+    }
+
     // On the first reading of a new day: file the finished day into the history,
     // settle the streak (one missed day is forgiven), and clear today's counters.
     function roll() as Void {
@@ -47,7 +69,7 @@ module Day {
             var light = num("light");
             var streak = num("streak");
             var miss = num("miss");
-            if (light >= GOAL_SECS) {
+            if (light >= goalSecs()) {
                 streak += 1;
                 miss = 0;
             } else {
@@ -61,12 +83,13 @@ module Day {
                 streak = 0;
             }
             var old = Application.Storage.getValue("hist");
-            var hist = [0, 0, 0, 0, 0, 0] as Array<Application.Storage.ValueType>;
-            for (var i = 0; i < 6; i++) {
+            var hist = new [DAYS] as Array<Application.Storage.ValueType>;
+            for (var i = 0; i < DAYS; i++) {
                 var src = i - gap;
+                hist[i] = 0;
                 if (i == gap - 1) {
                     hist[i] = light / 60;
-                } else if (src >= 0 && src < 6 && (old instanceof Array) && old.size() == 6) {
+                } else if (src >= 0 && (old instanceof Array) && src < old.size()) {
                     hist[i] = (old as Array<Number>)[src];
                 }
             }
