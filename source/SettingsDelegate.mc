@@ -44,7 +44,8 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             _model.load();
         }
         if (id == :setup || id == :fresh) {
-            WatchUi.switchToView(SetupDelegate.menu(0), new SetupDelegate(_model, 0, true), WatchUi.SLIDE_LEFT);
+            var setup = new SetupView();
+            WatchUi.switchToView(setup, new SetupDelegate(setup, _model, true), WatchUi.SLIDE_LEFT);
             return;
         }
         if (id == :goal) {
