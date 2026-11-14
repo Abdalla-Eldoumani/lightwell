@@ -6,6 +6,10 @@ import Toybox.WatchUi;
 
 class DaylightView extends WatchUi.View {
 
+    private const PAGES = 4;
+    // Stand-in history for demo mode, yesterday first. Shown under a SAMPLE label.
+    private const SAMPLE = [22, 8, 25, 0, 21, 24] as Array<Number>;
+
     private var _model as DaylightModel;
     private var _timer as Timer.Timer?;
     private var _page as Number = 0;
@@ -35,7 +39,7 @@ class DaylightView extends WatchUi.View {
     }
 
     function turn(by as Number) as Void {
-        _page = (_page + by + 3) % 3;
+        _page = (_page + by + PAGES) % PAGES;
         WatchUi.requestUpdate();
     }
 
@@ -46,9 +50,12 @@ class DaylightView extends WatchUi.View {
             drawRing(dc);
         } else if (_page == 1) {
             drawSun(dc);
+        } else if (_page == 2) {
+            drawWeek(dc);
         } else {
-            drawToday(dc);
+            drawSensors(dc);
         }
+        drawDots(dc);
     }
 
     // Page 1: today's light against the goal.
@@ -58,9 +65,10 @@ class DaylightView extends WatchUi.View {
         var h = dc.getHeight();
         var cx = w / 2;
         var cy = h / 2;
-        var r = w / 2 - 10;
+        // Pulled in from the bezel so the page dots fit outside it.
+        var r = w / 2 - 18;
 
-        dc.setPenWidth(14);
+        dc.setPenWidth(12);
         dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(cx, cy, r);
 
@@ -75,35 +83,42 @@ class DaylightView extends WatchUi.View {
 
         var state = "INDOORS";
         if (m.inLight) {
-            state = "IN LIGHT " + m.lightPct.format("%d") + "%";
+            state = "LIGHT " + m.lightPct.format("%d") + "%";
         } else if (m.hasFix && !m.sunUp()) {
-            state = "SUN IS DOWN";
+            state = "SUN DOWN";
         }
         dc.setColor(m.inLight ? Graphics.COLOR_YELLOW : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx, 52, Graphics.FONT_XTINY, state);
+        line(dc, 60, state, 100);
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx, cy - 10, Graphics.FONT_NUMBER_HOT, (m.lightSecs / 60).format("%d"));
+        text(dc, cx, cy - 8, Graphics.FONT_NUMBER_THAI_HOT, (m.lightSecs / 60).format("%d"));
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx, cy + 42, Graphics.FONT_XTINY, "of " + (m.goalSecs / 60).format("%d") + " min");
+        line(dc, cy + 38, "of " + (m.goalSecs / 60).format("%d") + " min", 100);
 
-        var line = "Streak " + m.streak.format("%d");
+        var info = "";
         if (!m.note.equals("")) {
-            line = m.note;
+            info = m.note;
         } else if (m.hasFix) {
             var now = m.nowMin();
             if (m.sunUp()) {
-                line = "Sun left " + span(m.setMin - now);
+                info = "Sun left " + span(m.setMin - now);
             } else if (now < m.riseMin) {
-                line = "Sunrise " + clock(m.riseMin);
+                info = "Sunrise " + clock(m.riseMin);
+            } else {
+                info = "Sun is down";
             }
+        } else {
+            info = "Waiting for GPS";
         }
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx, h - 62, Graphics.FONT_XTINY, line);
+        line(dc, h - 64, info, 100);
 
         if (m.demo >= 0) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            text(dc, cx, h - 38, Graphics.FONT_XTINY, "DEMO " + m.demo.format("%d") + "% x60");
+            text(dc, cx, h - 38, Graphics.FONT_XTINY, "DEMO x60");
+        } else {
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            text(dc, cx, h - 38, Graphics.FONT_XTINY, "Streak " + m.streak().format("%d"));
         }
     }
 
@@ -114,11 +129,11 @@ class DaylightView extends WatchUi.View {
         var h = dc.getHeight();
         var cx = w / 2;
         var cy = h / 2;
-        var r = w / 2 - 28;
+        var r = w / 2 - 34;
 
         if (!m.hasFix) {
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            text(dc, cx, cy, Graphics.FONT_SMALL, "Waiting for GPS");
+            line(dc, cy, "Waiting for GPS", 122);
             return;
         }
 
@@ -128,7 +143,7 @@ class DaylightView extends WatchUi.View {
 
         var north = Math.toRadians(0.0 - m.heading);
         dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx + ((r + 14) * Math.sin(north)).toNumber(), cy - ((r + 14) * Math.cos(north)).toNumber(),
+        text(dc, cx + ((r + 13) * Math.sin(north)).toNumber(), cy - ((r + 13) * Math.cos(north)).toNumber(),
             Graphics.FONT_XTINY, "N");
 
         var a = Math.toRadians(m.sunAz - m.heading);
@@ -136,85 +151,141 @@ class DaylightView extends WatchUi.View {
         var sy = cy - (r * Math.cos(a)).toNumber();
         if (m.sunUp()) {
             dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-            dc.drawLine(cx, cy, sx, sy);
-            dc.fillCircle(sx, sy, 12);
+            // The ray starts outside the text in the middle.
+            dc.drawLine(cx + (66 * Math.sin(a)).toNumber(), cy - (66 * Math.cos(a)).toNumber(), sx, sy);
+            dc.fillCircle(sx, sy, 11);
         } else {
-            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawCircle(sx, sy, 12);
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawCircle(sx, sy, 11);
         }
         dc.setPenWidth(1);
 
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(cx, cy, 58);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx, cy - 24, Graphics.FONT_MEDIUM, compassWord(m.sunAz) + " " + m.sunAz.format("%.0f") + "°");
+        text(dc, cx, cy - 26, Graphics.FONT_MEDIUM, compassWord(m.sunAz) + " " + m.sunAz.format("%.0f") + "°");
         if (m.sunUp()) {
-            text(dc, cx, cy + 4, Graphics.FONT_XTINY, m.sunEl.format("%.0f") + "° up");
-            text(dc, cx, cy + 28, Graphics.FONT_XTINY, "Sets " + clock(m.setMin));
+            text(dc, cx, cy + 2, Graphics.FONT_TINY, m.sunEl.format("%.0f") + "° up");
+            text(dc, cx, cy + 26, Graphics.FONT_TINY, "Sets " + clock(m.setMin));
         } else {
-            text(dc, cx, cy + 4, Graphics.FONT_XTINY, "Sun is down");
-            text(dc, cx, cy + 28, Graphics.FONT_XTINY, "Rises " + clock(m.riseMin));
+            text(dc, cx, cy + 2, Graphics.FONT_TINY, "Sun is down");
+            text(dc, cx, cy + 26, Graphics.FONT_TINY, "Rises " + clock(m.riseMin));
         }
         if (!m.hasHeading) {
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            text(dc, cx, h - 30, Graphics.FONT_XTINY, "north up");
+            text(dc, cx, h - 22, Graphics.FONT_XTINY, "north up");
         }
     }
 
-    // Page 3: what each sensor contributed today.
-    private function drawToday(dc as Dc) as Void {
+    // Page 3: the habit. Six finished days and today, against the goal line.
+    private function drawWeek(dc as Dc) as Void {
         var m = _model;
-        var cx = dc.getWidth() / 2;
-        var y = 44;
+        var demo = m.demo >= 0;
+        var goalMin = m.goalSecs / 60;
+        var base = 168;
+        var maxH = 84;
+        // A bar is full height at one and a half times the goal.
+        var top = goalMin * 3 / 2;
+
+        dc.setColor(demo ? Graphics.COLOR_RED : Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        line(dc, 46, demo ? "SAMPLE WEEK" : "LAST 7 DAYS", 122);
+
+        var met = 0;
+        for (var i = 0; i < 7; i++) {
+            // Left to right: six days ago up to today.
+            var mins = m.lightSecs / 60;
+            if (i < 6) {
+                mins = demo ? SAMPLE[5 - i] : m.hist[5 - i];
+            }
+            var color = Graphics.COLOR_DK_GRAY;
+            if (mins >= goalMin) {
+                met += 1;
+                color = Graphics.COLOR_YELLOW;
+            } else if (i == 6) {
+                color = Graphics.COLOR_ORANGE;
+            }
+            var bar = ((mins > top) ? top : mins) * maxH / top;
+            if (bar < 2) {
+                bar = 2;
+            }
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(58 + i * 22, base - bar, 14, bar);
+        }
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        var goalY = base - goalMin * maxH / top;
+        dc.drawLine(50, goalY, 212, goalY);
+        line(dc, 190, met.format("%d") + " of 7 days at goal", 122);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        line(dc, 214, "Streak " + m.streak().format("%d"), 122);
+    }
+
+    // Page 4: what each sensor is reading and what it is used for.
+    private function drawSensors(dc as Dc) as Void {
+        var m = _model;
 
         dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx, y, Graphics.FONT_XTINY, "TODAY");
+        line(dc, 38, "SENSORS", 122);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
 
-        y += 28;
-        var light = "Light " + (m.lightSecs / 60).format("%d") + " min, now " + m.lightPct.format("%d") + "%";
-        if (!m.hasSolar && m.demo < 0) {
-            light = "No solar sensor";
+        var solar = "No solar sensor";
+        if (m.hasSolar || m.demo >= 0) {
+            solar = "Solar " + m.lightPct.format("%d") + "%, " + (m.lightSecs / 60).format("%d") + " min";
         }
-        text(dc, cx, y, Graphics.FONT_XTINY, light);
+        line(dc, 65, solar, 122);
 
-        y += 28;
-        text(dc, cx, y, Graphics.FONT_XTINY, "Moving " + (m.moveSecs / 60).format("%d") + " min" + (m.moving ? " (now)" : ""));
-
-        y += 28;
-        var heart = "HR " + m.hr.format("%d");
+        var heart = "HR waiting";
         if (m.hrBefore > 0) {
-            heart = "HR before " + m.hrBefore.format("%d") + ", now " + m.hr.format("%d");
+            heart = "HR " + m.hrBefore.format("%d") + " in, " + m.hr.format("%d") + " now";
+        } else if (m.hr > 0) {
+            heart = "HR " + m.hr.format("%d");
         }
-        text(dc, cx, y, Graphics.FONT_XTINY, heart);
+        line(dc, 92, heart, 122);
 
-        y += 28;
         var gps = "GPS waiting";
         if (m.hasFix) {
             gps = "GPS " + m.lat.format("%.2f") + ", " + m.lon.format("%.2f");
         }
-        text(dc, cx, y, Graphics.FONT_XTINY, gps);
+        line(dc, 119, gps, 122);
 
-        y += 28;
-        var baro = "Baro no history";
+        var baro = "Baro waiting";
         if (m.hasBaro) {
-            baro = "Baro " + m.baroDelta.format("%.1f") + " hPa/3h";
+            baro = "Baro " + m.baroDelta.format("%.1f") + " hPa";
             if (m.baroDelta <= -1.5) {
                 baro = baro + ", go now";
             }
         }
-        text(dc, cx, y, Graphics.FONT_XTINY, baro);
+        line(dc, 146, baro, 122);
 
-        y += 28;
+        line(dc, 173, "Moving " + (m.moveSecs / 60).format("%d") + " min" + (m.moving ? " (now)" : ""), 122);
+
         var comp = "Compass waiting";
         if (m.hasHeading) {
             comp = "Compass " + m.heading.format("%.0f") + "°";
         }
-        text(dc, cx, y, Graphics.FONT_XTINY, comp);
+        line(dc, 200, comp, 122);
+    }
+
+    private function drawDots(dc as Dc) as Void {
+        var cy = dc.getHeight() / 2;
+        for (var i = 0; i < PAGES; i++) {
+            dc.setColor((i == _page) ? Graphics.COLOR_WHITE : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(7, cy - 18 + i * 12, 3);
+        }
     }
 
     private function text(dc as Dc, x as Number, y as Number, font as Graphics.FontType, s as String) as Void {
         dc.drawText(x, y, font, s, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // A centred line that drops to the small font when it would not fit inside
+    // a circle of the given radius at that height.
+    private function line(dc as Dc, y as Number, s as String, radius as Number) as Void {
+        var dy = y - dc.getHeight() / 2;
+        var room = 2 * Math.sqrt(radius * radius - dy * dy) - 8;
+        var font = Graphics.FONT_TINY;
+        if (dc.getTextWidthInPixels(s, font) > room) {
+            font = Graphics.FONT_XTINY;
+        }
+        text(dc, dc.getWidth() / 2, y, font, s);
     }
 
     private function clock(mins as Number) as String {
