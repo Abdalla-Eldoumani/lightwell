@@ -25,12 +25,23 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    // On the drinks page a tap on the left adds a coffee, on the right a water.
+    // A tap picks a button on the settings page. On the drinks page a tap on the left
+    // adds a coffee and on the right a water.
     function onTap(clickEvent as WatchUi.ClickEvent) as Boolean {
-        if (_view.page() != 2) {
+        var at = clickEvent.getCoordinates();
+        if (_view.page == _view.SETTINGS_PAGE) {
+            for (var i = 0; i < 2; i++) {
+                if (at[1] >= _view.BUTTON_Y[i] - 18 && at[1] <= _view.BUTTON_Y[i] + 18) {
+                    _view.focus = i;
+                    return onSelect();
+                }
+            }
+            return true;
+        }
+        if (_view.page != _view.DRINKS_PAGE) {
             return false;
         }
-        if (clickEvent.getCoordinates()[0] < System.getDeviceSettings().screenWidth / 2) {
+        if (at[0] < System.getDeviceSettings().screenWidth / 2) {
             _model.addCup(1);
         } else {
             _model.addGlass(1);
@@ -39,9 +50,19 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    // START steps the demo light level, or opens the log on the drinks page; hold UP opens the settings.
+    // START opens the focused button on the settings page and the log on the drinks page,
+    // and steps the demo light level elsewhere. Hold UP opens the settings from any page.
     function onSelect() as Boolean {
-        if (_view.page() == 2) {
+        if (_view.page == _view.SETTINGS_PAGE) {
+            if (_view.focus == 0) {
+                SettingsDelegate.open(_model);
+            } else {
+                var setup = new SetupView();
+                WatchUi.pushView(setup, new SetupDelegate(setup, _model, true), WatchUi.SLIDE_LEFT);
+            }
+            return true;
+        }
+        if (_view.page == _view.DRINKS_PAGE) {
             var log = new WatchUi.Menu2({ :title => "Log a drink" });
             log.addItem(new WatchUi.MenuItem("Coffee", "Add one", :coffee, null));
             log.addItem(new WatchUi.MenuItem("Water", "Add one", :water, null));
@@ -66,22 +87,7 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onMenu() as Boolean {
-        var menu = new WatchUi.Menu2({ :title => "Settings" });
-        menu.addItem(new WatchUi.MenuItem("Daily goal", SettingsDelegate.label(:goal), :goal, null));
-        menu.addItem(new WatchUi.MenuItem("Wording", SettingsDelegate.label(:words), :words, null));
-        menu.addItem(new WatchUi.MenuItem("Nudges", SettingsDelegate.label(:buzz), :buzz, null));
-        menu.addItem(new WatchUi.MenuItem("Last coffee", SettingsDelegate.label(:cutoff), :cutoff, null));
-        menu.addItem(new WatchUi.MenuItem("Water goal", SettingsDelegate.label(:h2o), :h2o, null));
-        menu.addItem(new WatchUi.MenuItem("Stress nudge", SettingsDelegate.label(:calm), :calm, null));
-        menu.addItem(new WatchUi.MenuItem("Night nudges", SettingsDelegate.label(:night), :night, null));
-        menu.addItem(new WatchUi.MenuItem("Preview nudge", null, :preview, null));
-        menu.addItem(new WatchUi.MenuItem("Run setup again", null, :setup, null));
-        menu.addItem(new WatchUi.MenuItem("Clear today", null, :clear, null));
-        menu.addItem(new WatchUi.MenuItem("Demo: new user", "Wipes everything", :fresh, null));
-        menu.addItem(new WatchUi.MenuItem("Demo: month later", "Loads sample data", :month, null));
-        menu.addItem(new WatchUi.MenuItem("Demo: tense spell", "20 min at a desk", :tense, null));
-        menu.addItem(new WatchUi.MenuItem("Demo: midday check", "The gentle reminder", :midday, null));
-        WatchUi.pushView(menu, new SettingsDelegate(_model), WatchUi.SLIDE_LEFT);
+        SettingsDelegate.open(_model);
         return true;
     }
 

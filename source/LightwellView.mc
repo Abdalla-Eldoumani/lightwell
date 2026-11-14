@@ -6,11 +6,15 @@ import Toybox.WatchUi;
 
 class LightwellView extends WatchUi.View {
 
-    private const PAGES = 7;
+    private const PAGES = 8;
+    const DRINKS_PAGE = 2;
+    const SETTINGS_PAGE = 7;
 
     private var _model as LightwellModel;
     private var _timer as Timer.Timer?;
-    private var _page as Number = 0;
+    var page as Number = 0;
+    var focus as Number = 0;    // on the settings page: 0 the settings button, 1 the setup button
+    const BUTTON_Y = [158, 198];
 
     function initialize(model as LightwellModel) {
         View.initialize();
@@ -61,12 +65,15 @@ class LightwellView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
-    function page() as Number {
-        return _page;
-    }
-
+    // On the settings page UP and DOWN first move between its two buttons, then leave the page.
     function turn(by as Number) as Void {
-        _page = (_page + by + PAGES) % PAGES;
+        if (page == SETTINGS_PAGE && focus == ((by > 0) ? 0 : 1)) {
+            focus = (by > 0) ? 1 : 0;
+            WatchUi.requestUpdate();
+            return;
+        }
+        page = (page + by + PAGES) % PAGES;
+        focus = (by > 0) ? 0 : 1;
         WatchUi.requestUpdate();
     }
 
@@ -76,20 +83,22 @@ class LightwellView extends WatchUi.View {
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
-        if (_page == 0) {
+        if (page == 0) {
             drawRing(dc);
-        } else if (_page == 1) {
+        } else if (page == 1) {
             drawSun(dc);
-        } else if (_page == 2) {
+        } else if (page == 2) {
             drawDrinks(dc);
-        } else if (_page == 3) {
+        } else if (page == 3) {
             drawStress(dc);
-        } else if (_page == 4) {
+        } else if (page == 4) {
             drawWeek(dc);
-        } else if (_page == 5) {
+        } else if (page == 5) {
             drawMonth(dc);
-        } else {
+        } else if (page == 6) {
             drawSensors(dc);
+        } else {
+            drawSettings(dc);
         }
         drawDots(dc);
     }
@@ -412,6 +421,32 @@ class LightwellView extends WatchUi.View {
         text(dc, cx, h - 40, Graphics.FONT_XTINY, (after > 0) ? "Nudge after " + after.format("%d") + " min" : "Nudge off");
     }
 
+    // What is set now, and two buttons: the settings menu and the setup wizard.
+    private function drawSettings(dc as Dc) as Void {
+        var cx = dc.getWidth() / 2;
+        dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
+        line(dc, 40, "SETTINGS", 122);
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        line(dc, 72, (Day.goalSecs() / 60).format("%d") + " min a day", 122);
+        line(dc, 96, "\"" + Day.action() + "\"", 122);
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        line(dc, 120, SettingsDelegate.label(:buzz), 122);
+        var names = ["Settings", "Run setup"];
+        for (var i = 0; i < 2; i++) {
+            var y = BUTTON_Y[i];
+            if (i == focus) {
+                dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
+                dc.fillRoundedRectangle(cx - 75, y - 16, 150, 32, 16);
+                dc.setColor(Palette.NAVY, Graphics.COLOR_TRANSPARENT);
+            } else {
+                dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+                dc.drawRoundedRectangle(cx - 75, y - 16, 150, 32, 16);
+                dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            }
+            text(dc, cx, y, Graphics.FONT_TINY, names[i]);
+        }
+    }
+
     // Name on the left of the centre line in grey, reading on the right in white.
     private function row(dc as Dc, y as Number, name as String, value as String) as Void {
         var cx = dc.getWidth() / 2;
@@ -426,7 +461,7 @@ class LightwellView extends WatchUi.View {
     private function drawDots(dc as Dc) as Void {
         var cy = dc.getHeight() / 2;
         for (var i = 0; i < PAGES; i++) {
-            dc.setColor((i == _page) ? Graphics.COLOR_WHITE : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor((i == page) ? Graphics.COLOR_WHITE : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(7, cy - (PAGES - 1) * 6 + i * 12, 3);
         }
     }
