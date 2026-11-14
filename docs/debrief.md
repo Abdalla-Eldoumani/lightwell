@@ -1,4 +1,4 @@
-# Daylight debrief
+# Lightwell debrief
 
 Tech Thursday x Garmin Hackathon, Calgary, November 14, 2026. Target: fēnix 7 Pro (Connect IQ API 5.2, 260 × 260 round MIP screen).
 
@@ -6,7 +6,7 @@ This file records what we built, what we decided to add, and why. The build sche
 
 ## The idea
 
-On hackathon day the sun in Calgary rose at 8:50 AM, set at 5:51 PM, and never got higher than 21°. A desk worker can easily spend all of that daylight indoors. The fēnix 7 Pro already measures sunlight so it can charge itself. Daylight reads that same sensor.
+On hackathon day the sun in Calgary rose at 8:50 AM, set at 5:51 PM, and never got higher than 21°. A desk worker can easily spend all of that daylight indoors. The fēnix 7 Pro already measures sunlight so it can charge itself. Lightwell reads that same sensor.
 
 We started with a sunlight counter. The brainstorm turned it into a **context-aware desk recovery app**: the watch reads its sensors and nudges you when your body needs a break, instead of on a fixed timer. Timer reminders are easy to ignore. A nudge that says why it fired, and gives one action that covers several goals at once, is harder to ignore.
 

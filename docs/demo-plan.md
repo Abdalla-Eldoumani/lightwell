@@ -1,6 +1,6 @@
 # Demo and presentation plan
 
-How we finish Daylight before the **4:00 PM** deadline and how we present it. What we are building and why is in [debrief.md](debrief.md).
+How we finish Lightwell before the **4:00 PM** deadline and how we present it. What we are building and why is in [debrief.md](debrief.md).
 
 **Rule:** build on the app that already works. Each new feature must be demoable in the simulator in under 30 seconds, using demo mode. If a feature can't be, cut it.
 

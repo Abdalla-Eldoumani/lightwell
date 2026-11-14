@@ -1,0 +1,11 @@
+<svg width="720" height="240" viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg">
+<rect width="720" height="240" rx="32" fill="#000000"/>
+<g transform="translate(40 20) scale(5)">
+<path d="M20 2V5M8.5 6.5L10.6 8.6M31.5 6.5L29.4 8.6M4 17H7M33 17H36" stroke="#FFAA00" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="20" cy="15" r="7" fill="#FFAA00"/>
+<path d="M6 21H34A14 13 0 0 1 6 21Z" fill="#00AAFF"/>
+<path d="M11 27Q13.5 25 16 27T21 27T26 27T29 27" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+<text x="270" y="140" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="92" font-weight="700" fill="#FFFFFF" letter-spacing="-2">Light<tspan fill="#00AAFF">well</tspan></text>
+<text x="274" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="24" fill="#AAAAAA" letter-spacing="1">Wellness for desk days</text>
+</svg>
