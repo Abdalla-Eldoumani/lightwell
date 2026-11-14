@@ -1,4 +1,5 @@
 import Toybox.Application;
+import Toybox.Attention;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
@@ -30,6 +31,12 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.popView(WatchUi.SLIDE_RIGHT);
             return;
         }
+        if (id == :preview) {
+            // The app underneath shows the card as soon as the menu closes.
+            _model.nudge(60);
+            WatchUi.popView(WatchUi.SLIDE_RIGHT);
+            return;
+        }
         if (id == :month) {
             DemoData.month();
             _model.load();
@@ -56,6 +63,8 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             Application.Storage.setValue("words", (Day.num("words") + 1) % 3);
         } else {
             Application.Storage.setValue("buzz", (Day.num("buzz") + 1) % 3);
+            // Plays the new level so the choice can be felt and heard.
+            _model.alert(Attention.TONE_ALERT_HI);
         }
         item.setSubLabel(label(id));
         WatchUi.requestUpdate();
