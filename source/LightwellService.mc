@@ -6,7 +6,7 @@ import Toybox.System;
 import Toybox.Time;
 
 (:background)
-class DaylightService extends System.ServiceDelegate {
+class LightwellService extends System.ServiceDelegate {
 
     function initialize() {
         ServiceDelegate.initialize();
@@ -26,7 +26,7 @@ class DaylightService extends System.ServiceDelegate {
         if (s != null && s >= Day.LIGHT_MIN) {
             Application.Storage.setValue("light", light + 300);
             if (light < Day.GOAL_SECS && light + 300 >= Day.GOAL_SECS) {
-                Background.requestApplicationWake("Daylight goal reached");
+                Background.requestApplicationWake("Lightwell goal reached");
             }
         } else if (light < Day.GOAL_SECS) {
             nudge();

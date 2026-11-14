@@ -1,10 +1,10 @@
-# Daylight
+# Lightwell
 
 A Garmin Connect IQ watch app that counts the daylight you get, using the watch's solar charging sensor. Built for the Fenix 7 Pro at the Tech Thursday x Garmin Hackathon in Calgary on November 14, 2026.
 
 ## Why
 
-On the day this was built the sun in Calgary rose at 8:50 AM, set at 5:51 PM, and never climbed higher than 21 degrees. It is easy to spend the whole of that indoors. The watch already has a sensor that measures sunlight so it can charge itself. Daylight reads the same sensor and counts the light toward a daily goal of 20 minutes.
+On the day this was built the sun in Calgary rose at 8:50 AM, set at 5:51 PM, and never climbed higher than 21 degrees. It is easy to spend the whole of that indoors. The watch already has a sensor that measures sunlight so it can charge itself. Lightwell reads the same sensor and counts the light toward a daily goal of 20 minutes.
 
 ## What it does
 

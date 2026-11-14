@@ -6,10 +6,10 @@ import Toybox.Time;
 import Toybox.WatchUi;
 
 (:background)
-class DaylightApp extends Application.AppBase {
+class LightwellApp extends Application.AppBase {
 
     // Stays null in the background process, which never builds a view.
-    private var _model as DaylightModel?;
+    private var _model as LightwellModel?;
 
     function initialize() {
         AppBase.initialize();
@@ -32,15 +32,15 @@ class DaylightApp extends Application.AppBase {
         } catch (e) {
             // Without the schedule the app still counts while it is open.
         }
-        var m = new DaylightModel();
+        var m = new LightwellModel();
         m.start();
         _model = m;
-        var view = new DaylightView(m);
-        return [ view, new DaylightDelegate(view, m) ];
+        var view = new LightwellView(m);
+        return [ view, new LightwellDelegate(view, m) ];
     }
 
     function getServiceDelegate() as [System.ServiceDelegate] {
-        return [ new DaylightService() ];
+        return [ new LightwellService() ];
     }
 
 }

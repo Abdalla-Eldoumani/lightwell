@@ -1,12 +1,12 @@
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-class DaylightDelegate extends WatchUi.BehaviorDelegate {
+class LightwellDelegate extends WatchUi.BehaviorDelegate {
 
-    private var _view as DaylightView;
-    private var _model as DaylightModel;
+    private var _view as LightwellView;
+    private var _model as LightwellModel;
 
-    function initialize(view as DaylightView, model as DaylightModel) {
+    function initialize(view as LightwellView, model as LightwellModel) {
         BehaviorDelegate.initialize();
         _view = view;
         _model = model;

@@ -4,17 +4,17 @@ import Toybox.Math;
 import Toybox.Timer;
 import Toybox.WatchUi;
 
-class DaylightView extends WatchUi.View {
+class LightwellView extends WatchUi.View {
 
     private const PAGES = 4;
     // Stand-in history for demo mode, yesterday first. Shown under a SAMPLE label.
     private const SAMPLE = [22, 8, 25, 0, 21, 24] as Array<Number>;
 
-    private var _model as DaylightModel;
+    private var _model as LightwellModel;
     private var _timer as Timer.Timer?;
     private var _page as Number = 0;
 
-    function initialize(model as DaylightModel) {
+    function initialize(model as LightwellModel) {
         View.initialize();
         _model = model;
     }
