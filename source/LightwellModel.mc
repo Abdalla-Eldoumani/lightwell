@@ -51,6 +51,7 @@ class LightwellModel {
     var seeded as Boolean = false;                     // the history is demo data
     var note as String = "";
     var why as String = "";         // the reason behind the nudge on screen
+    var card as Number = 0;         // 1 nudge, 2 goal reached: the view shows it full screen
 
     private var _streak as Number = 0;
 
@@ -112,6 +113,7 @@ class LightwellModel {
             }
             if (before < goalSecs && lightSecs >= goalSecs) {
                 setNote("Goal reached");
+                card = 2;
                 alert(Attention.TONE_SUCCESS);
                 save();
             }
@@ -270,11 +272,22 @@ class LightwellModel {
             sat = 60;
         }
         if (sat > 0 && sunUp() && !inLight && lightSecs < goalSecs && _ticks - _lastNudge > 1800) {
-            _lastNudge = _ticks;
-            setNote(Day.action());
-            why = "Sitting " + hm(sat);
-            alert(Attention.TONE_ALERT_HI);
+            nudge(sat);
         }
+    }
+
+    // Also run from the settings menu, to preview the nudge.
+    function nudge(sat as Number) as Void {
+        _lastNudge = _ticks;
+        setNote(Day.action());
+        why = "Sitting " + hm(sat);
+        card = 1;
+        alert(Attention.TONE_ALERT_HI);
+    }
+
+    // "Later" on the nudge: ask again in 10 minutes instead of 30.
+    function snooze() as Void {
+        _lastNudge = _ticks - 1200;
     }
 
     private function readPressureTrend() as Void {
@@ -373,7 +386,7 @@ class LightwellModel {
     }
 
     // Nudge setting: 0 buzz and tone, 1 soft buzz, 2 screen only.
-    private function alert(tone as Attention.Tone) as Void {
+    function alert(tone as Attention.Tone) as Void {
         var level = Day.num("buzz");
         if (level < 2 && (Attention has :vibrate)) {
             var pulse = (level == 1) ? new Attention.VibeProfile(25, 150) : new Attention.VibeProfile(60, 400);
