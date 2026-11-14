@@ -36,6 +36,7 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         menu.addItem(new WatchUi.MenuItem("Daily goal", SettingsDelegate.label(:goal), :goal, null));
         menu.addItem(new WatchUi.MenuItem("Wording", SettingsDelegate.label(:words), :words, null));
         menu.addItem(new WatchUi.MenuItem("Nudges", SettingsDelegate.label(:buzz), :buzz, null));
+        menu.addItem(new WatchUi.MenuItem("Preview nudge", null, :preview, null));
         menu.addItem(new WatchUi.MenuItem("Run setup again", null, :setup, null));
         menu.addItem(new WatchUi.MenuItem("Clear today", null, :clear, null));
         menu.addItem(new WatchUi.MenuItem("Demo: new user", "Wipes everything", :fresh, null));
