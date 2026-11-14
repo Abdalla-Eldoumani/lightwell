@@ -1,26 +1,35 @@
-# Handoff: build (Abdalla)
+# Stream 1: screens and nudges (Abdalla, with Yaseen on the simulator)
 
-You are the only person who edits source/ and resources/, and the only one who merges to main. Everyone else's work feeds yours.
+You own how the app looks and how a nudge lands. You are the only person who edits LightwellView.mc, LightwellModel.mc, LightwellDelegate.mc, LightwellApp.mc, LightwellService.mc and Day.mc, and you merge everything to main.
 
-## Now
+## Already on main
 
-1. In Git Bash: git pull. The docs were merged on GitHub, so main moved.
-2. Run the app with Yaseen and look at his screenshots of all four pages. Fix what is wrong before adding anything.
+- Five pages (ring, sun finder, week, month, sensors) with page dots. The month page is a grid of 30 days: a full dot is a day at goal.
+- A nudge that says why: the ring page shows the sun time left, "Sitting 1h" and the action in the user's wording.
+- A tone and a vibration with each nudge and at the goal. In the simulator the window shakes on a vibration, and tones are reported to play through the PC speakers. Check that on your machine first.
+- Smoothed arcs (anti-aliasing) on the ring and the compass.
+- Settings on hold UP.
 
-## Build, 1:15 to 2:15, in this order
+## To do, in this order
 
-1. **Settings menu on hold UP.** Goal: 10, 20, 30. Wording: walk, roll, window. Vibration: normal, soft, off. "Clear today" moves into this menu. Store the values with Application.Storage and read them through one small Config file. No settings.xml.
-2. **Nudge with its reason.** "Sitting 1h, 4h of sun left", then the action line from the wording table in handoff-mentor.md. The triggers stay as they are.
-3. **Rename.** If the team has settled on Lightwell, change AppName in resources/strings/strings.xml and the README title. Leave class and file names alone.
-4. **Threshold.** When Josh's numbers arrive, change LIGHT_MIN in source/Day.mc. It is one constant.
-5. **Only if 1 to 4 are done by 2:00:** current stress as a second trigger for the nudge.
+1. **Fix what the screenshots show.** Nobody has reviewed these pages on screen yet. Clipped or overlapping text comes first.
+2. **Make "goal met" a change of shape as well as colour.** A filled dot or a tick in the middle of the full ring. Colour alone is easy to miss on this screen.
+3. **Today's bar on the week page in the accent colour**, the other days in grey, so the eye lands on today.
+4. **Only if 1 to 3 are done by 2:30:** draw the nudge as a band along the bottom edge of the ring page, in place of two lines of text.
+
+## What good looks like here
+
+- One number per page, readable in under 2 seconds. Nothing smaller than the small label font.
+- Black background, white text, one warm colour for sun and progress, one grey. No third colour without a reason.
+- A nudge only when the user can act on it, and never more than one at a time.
+- These come from Apple's watchOS guidelines, Google's Wear OS principles and the Material 3 Expressive notes for Wear OS. Links are in demo-plan.md.
+
+## How we review the look
+
+Nothing about the look is decided in one pass. For each visual change, Yaseen screenshots it in the simulator, the team says keep, change or drop, and only then does the next change start. Where there is a real choice (the nudge is the first one), three versions are shown side by side and the team picks.
 
 ## Rules
 
-- One file per commit. Never commit bin/.
-- Build with no warnings before every push. Tell Yaseen after every push so he reruns his checklist.
-- 2:30 is the feature freeze. After that, only fixes for something that breaks the demo.
-
-## Done when
-
-Yaseen has seen every change run in the simulator, and the full demo path works twice in a row.
+- One file per commit. Never commit bin/. Run git pull --rebase before every push.
+- Build with no warnings before every push, then tell Yaseen.
+- 2:45 is the feature freeze.
