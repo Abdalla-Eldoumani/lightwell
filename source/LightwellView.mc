@@ -59,8 +59,8 @@ class LightwellView extends WatchUi.View {
                         : ["A short stroll outside?", "A short stroll outside?", "A while by the window?",
                            "A step outside the door?", "Open the blinds a while?"])[Day.num("words") % 5]];
             } else if (kind == 4) {
-                title = "Past your cutoff";
-                lines = ["Coffee after " + Day.cutoffText(), "Water instead?"];
+                title = "Coffee limit";
+                lines = [m.cups.format("%d") + " cups today", "Water instead?"];
             }
             WatchUi.pushView(new CardView(title, lines, nudge), new CardDelegate(m, nudge), WatchUi.SLIDE_UP);
             return;
@@ -370,7 +370,7 @@ class LightwellView extends WatchUi.View {
     private function drawDrinks(dc as Dc) as Void {
         var m = _model;
         var cx = dc.getWidth() / 2;
-        var late = m.pastCutoff();
+        var late = m.overCups();
 
         dc.setColor(Palette.GOLD, Graphics.COLOR_TRANSPARENT);
         line(dc, 40, "DRINKS", 122);
@@ -386,11 +386,12 @@ class LightwellView extends WatchUi.View {
         dc.setColor(Palette.SKY, Graphics.COLOR_TRANSPARENT);
         text(dc, cx + 56, 122, Graphics.FONT_NUMBER_HOT, m.glasses.format("%d"));
 
-        // Coffee turns red once the user's own cutoff has passed.
+        // Coffee turns red once today's cups reach the user's limit.
         dc.setColor(late ? Graphics.COLOR_RED : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         text(dc, cx - 56, 122, Graphics.FONT_NUMBER_HOT, m.cups.format("%d"));
         dc.setColor(late ? Graphics.COLOR_RED : Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        text(dc, cx - 56, 164, Graphics.FONT_XTINY, (late ? "past " : "until ") + Day.cutoffText());
+        text(dc, cx - 56, 164, Graphics.FONT_XTINY,
+            (Day.cupLimit() < 0) ? "no coffee" : (late ? "over " : "under ") + Day.cupLimit().format("%d"));
     }
 
     // Minutes spent tense while sitting still today, and the spell running now.

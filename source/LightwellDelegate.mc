@@ -63,11 +63,11 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
             return true;
         }
         if (_view.page == _view.DRINKS_PAGE) {
-            var log = new WatchUi.Menu2({ :title => "Log a drink" });
-            log.addItem(new WatchUi.MenuItem("Coffee", "Add one", :coffee, null));
-            log.addItem(new WatchUi.MenuItem("Water", "Add one", :water, null));
-            log.addItem(new WatchUi.MenuItem("Coffee", "Take one off", :lessCoffee, null));
-            log.addItem(new WatchUi.MenuItem("Water", "Take one off", :lessWater, null));
+            var log = new StyledMenu("Log a drink");
+            log.addItem(new StyledItem("Coffee", "Add one", :coffee));
+            log.addItem(new StyledItem("Water", "Add one", :water));
+            log.addItem(new StyledItem("Coffee", "Take one off", :lessCoffee));
+            log.addItem(new StyledItem("Water", "Take one off", :lessWater));
             WatchUi.pushView(log, new SettingsDelegate(_model, null), WatchUi.SLIDE_LEFT);
             return true;
         }

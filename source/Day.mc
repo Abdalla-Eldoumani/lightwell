@@ -52,10 +52,9 @@ module Day {
         return (v != 0) ? v : dflt;
     }
 
-    // The last hour for coffee, as the clock shows it: 12, 14 or 16.
-    function cutoffText() as String {
-        var h = opt("cutoff", 14);
-        return ((h > 12) ? h - 12 : h).format("%d") + " PM";
+    // Coffee a day: fewer than this many cups. -1 means no coffee at all; 4 until the user picks.
+    function cupLimit() as Number {
+        return opt("cups", 4);
     }
 
     function num(key as String) as Number {

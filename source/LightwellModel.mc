@@ -51,7 +51,7 @@ class LightwellModel {
     var seeded as Boolean = false;                     // the history is demo data
     var note as String = "";
     var why as String = "";         // the reason behind the nudge on screen
-    // 1 sit nudge, 2 goal reached, 3 tense spell, 4 coffee past the cutoff, 5 midday check:
+    // 1 sit nudge, 2 goal reached, 3 tense spell, 4 coffee over the daily limit, 5 midday check:
     // the view shows it full screen
     var card as Number = 0;
 
@@ -363,14 +363,16 @@ class LightwellModel {
         return Day.num("night") == 0 && (h >= 22 || h < 7);
     }
 
-    function pastCutoff() as Boolean {
-        return System.getClockTime().hour >= Day.opt("cutoff", 14);
+    // True once today's cups reach the limit; never for someone who doesn't drink coffee (-1).
+    function overCups() as Boolean {
+        var n = Day.cupLimit();
+        return n > 0 && cups >= n;
     }
 
     function addCup(by as Number) as Void {
         cups = (cups + by > 0) ? cups + by : 0;
         save();
-        if (by > 0 && pastCutoff()) {
+        if (by > 0 && overCups()) {
             card = 4;
             alert(Attention.TONE_ALERT_LO);
         }
