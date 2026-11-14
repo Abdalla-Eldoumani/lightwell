@@ -12,11 +12,7 @@ import Toybox.Time.Gregorian;
 
 class DaylightModel {
 
-    // solarIntensity runs 0 to 100. 5 is a first guess for "brighter than a room";
-    // the real cut-off needs a watch under office light and under open sky.
-    private const LIGHT_MIN = 5;
-
-    var goalSecs as Number = 1200;
+    var goalSecs as Number = Day.GOAL_SECS;
 
     // Light (solar sensor)
     var lightPct as Number = 0;
@@ -51,8 +47,10 @@ class DaylightModel {
     var hasBaro as Boolean = false;
     var baroDelta as Float = 0.0;   // hPa change over the last 3 hours
 
-    var streak as Number = 0;
+    var hist as Array<Number> = [0, 0, 0, 0, 0, 0] as Array<Number>;   // minutes of light, yesterday first
     var note as String = "";
+
+    private var _streak as Number = 0;
 
     private var _ticks as Number = 0;
     private var _noteTicks as Number = 0;
@@ -64,14 +62,11 @@ class DaylightModel {
     private var _lastNudge as Number = -1800;
     private var _lastSleeve as Number = -600;
     private var _day as Number = 0;
-    private var _lastGoalDay as Number = 0;
-    private var _offMin as Number = 0;
 
     function initialize() {
     }
 
     function start() as Void {
-        updateClock();
         load();
         Sensor.setEnabledSensors([Sensor.SENSOR_HEARTRATE] as Array<Sensor.SensorType>);
         onPosition(Position.getInfo());
@@ -92,13 +87,17 @@ class DaylightModel {
         readBody();
         if (_ticks % 30 == 1) {
             updateSun();
+            if (Day.today() != _day) {
+                save();
+                load();
+            }
         }
         if (_ticks % 300 == 0) {
             readPressureTrend();
         }
 
         var wasIn = inLight;
-        inLight = lightPct >= LIGHT_MIN;
+        inLight = lightPct >= Day.LIGHT_MIN;
         if (inLight && !wasIn) {
             hrBefore = hr;
         }
@@ -110,7 +109,9 @@ class DaylightModel {
                 moveSecs += step;
             }
             if (before < goalSecs && lightSecs >= goalSecs) {
-                goalReached();
+                setNote("Goal reached");
+                buzz();
+                save();
             }
         }
 
@@ -152,6 +153,11 @@ class DaylightModel {
         save();
     }
 
+    // Days in a row at goal; today counts once its ring is full.
+    function streak() as Number {
+        return _streak + ((lightSecs >= goalSecs) ? 1 : 0);
+    }
+
     function sunUp() as Boolean {
         return hasFix && sunEl > 0.0;
     }
@@ -178,7 +184,7 @@ class DaylightModel {
         if (_probe) {
             _probe = false;
             if (gpsQuality >= Position.QUALITY_USABLE && !inLight && sunEl > 3.0) {
-                setNote("Sleeve over watch?");
+                setNote("Uncover watch");
                 buzz();
             }
         }
@@ -255,32 +261,14 @@ class DaylightModel {
         var mb = ActivityMonitor.getInfo().moveBarLevel;
         if (mb != null && mb >= 1 && sunUp() && !inLight && lightSecs < goalSecs && _ticks - _lastNudge > 1800) {
             _lastNudge = _ticks;
-            setNote("Sun is up. Step out.");
+            setNote("Step outside");
             buzz();
         }
-    }
-
-    private function goalReached() as Void {
-        if (_lastGoalDay != _day) {
-            // One missed day does not break the streak.
-            if (_lastGoalDay >= _day - 2) {
-                streak += 1;
-            } else {
-                streak = 1;
-            }
-            _lastGoalDay = _day;
-        }
-        setNote("Goal reached");
-        buzz();
-        save();
     }
 
     private function readPressureTrend() as Void {
         if ((Toybox has :SensorHistory) && (SensorHistory has :getPressureHistory)) {
             var it = SensorHistory.getPressureHistory({ :period => new Time.Duration(10800) });
-            if (it == null) {
-                return;
-            }
             var newest = 0.0;
             var oldest = 0.0;
             var count = 0;
@@ -304,23 +292,8 @@ class DaylightModel {
         }
     }
 
-    private function updateClock() as Void {
-        var now = Time.now().value();
-        var utcMin = (now % 86400) / 60;
-        var off = nowMin() - utcMin;
-        if (off > 720) {
-            off -= 1440;
-        }
-        if (off < -720) {
-            off += 1440;
-        }
-        _offMin = off;
-        _day = (now + off * 60) / 86400;
-    }
-
     // NOAA's short solar position formulas. Checked against Calgary: Nov 14 gives 8:50 and 17:51.
     private function updateSun() as Void {
-        updateClock();
         if (!hasFix) {
             return;
         }
@@ -347,9 +320,16 @@ class DaylightModel {
         var cosH0 = clamp((Math.sin(Math.toRadians(-0.833)) - Math.sin(la) * Math.sin(dec))
             / (Math.cos(la) * Math.cos(dec)));
         var h0 = Math.toDegrees(Math.acos(cosH0));
-        var noon = 720.0 - 4.0 * lon - eot + _offMin;
-        riseMin = fmod(noon - 4.0 * h0, 1440.0).toNumber();
-        setMin = fmod(noon + 4.0 * h0, 1440.0).toNumber();
+        var noon = 720.0 - 4.0 * lon - eot + Day.offsetMin();
+        var rise = fmod(noon - 4.0 * h0, 1440.0).toNumber();
+        var set = fmod(noon + 4.0 * h0, 1440.0).toNumber();
+        if (rise != riseMin || set != setMin) {
+            riseMin = rise;
+            setMin = set;
+            // The background nudge has no GPS of its own.
+            Application.Storage.setValue("rise", rise);
+            Application.Storage.setValue("set", set);
+        }
     }
 
     private function clamp(x as Decimal) as Decimal {
@@ -379,33 +359,22 @@ class DaylightModel {
     }
 
     private function load() as Void {
-        var d = Application.Storage.getValue("day");
-        var ls = Application.Storage.getValue("light");
-        var ms = Application.Storage.getValue("move");
-        var sk = Application.Storage.getValue("streak");
-        var gd = Application.Storage.getValue("goalDay");
-        if (sk instanceof Number) {
-            streak = sk as Number;
-        }
-        if (gd instanceof Number) {
-            _lastGoalDay = gd as Number;
-        }
-        if ((d instanceof Number) && (d as Number) == _day) {
-            if (ls instanceof Number) {
-                lightSecs = ls as Number;
-            }
-            if (ms instanceof Number) {
-                moveSecs = ms as Number;
-            }
+        Day.roll();
+        _day = Day.today();
+        lightSecs = Day.num("light");
+        moveSecs = Day.num("move");
+        _streak = Day.num("streak");
+        var h = Application.Storage.getValue("hist");
+        if ((h instanceof Array) && h.size() == 6) {
+            hist = h as Array<Number>;
         }
     }
 
     function save() as Void {
-        Application.Storage.setValue("day", _day);
         Application.Storage.setValue("light", lightSecs);
         Application.Storage.setValue("move", moveSecs);
-        Application.Storage.setValue("streak", streak);
-        Application.Storage.setValue("goalDay", _lastGoalDay);
+        // Tells the background service the app is open and counting.
+        Application.Storage.setValue("seen", Time.now().value());
     }
 
 }
