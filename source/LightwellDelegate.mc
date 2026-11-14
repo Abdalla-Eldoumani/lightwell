@@ -24,23 +24,40 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    // START steps the demo light level; hold UP opens the settings.
+    // START opens the settings on the settings page and steps the demo light level elsewhere;
+    // hold UP opens the settings from any page.
     function onSelect() as Boolean {
+        if (_view.page == _view.SETTINGS_PAGE) {
+            if (_view.focus == 0) {
+                SettingsDelegate.open(_model);
+            } else {
+                var setup = new SetupView();
+                WatchUi.pushView(setup, new SetupDelegate(setup, _model, true), WatchUi.SLIDE_LEFT);
+            }
+            return true;
+        }
         _model.cycleDemo();
         WatchUi.requestUpdate();
         return true;
     }
 
+    // Tapping a button on the settings page picks and opens it.
+    function onTap(clickEvent as WatchUi.ClickEvent) as Boolean {
+        if (_view.page != _view.SETTINGS_PAGE) {
+            return false;
+        }
+        var y = clickEvent.getCoordinates()[1];
+        for (var i = 0; i < 2; i++) {
+            if (y >= _view.BUTTON_Y[i] - 18 && y <= _view.BUTTON_Y[i] + 18) {
+                _view.focus = i;
+                return onSelect();
+            }
+        }
+        return true;
+    }
+
     function onMenu() as Boolean {
-        var menu = new WatchUi.Menu2({ :title => "Settings" });
-        menu.addItem(new WatchUi.MenuItem("Daily goal", SettingsDelegate.label(:goal), :goal, null));
-        menu.addItem(new WatchUi.MenuItem("Wording", SettingsDelegate.label(:words), :words, null));
-        menu.addItem(new WatchUi.MenuItem("Nudges", SettingsDelegate.label(:buzz), :buzz, null));
-        menu.addItem(new WatchUi.MenuItem("Run setup again", null, :setup, null));
-        menu.addItem(new WatchUi.MenuItem("Clear today", null, :clear, null));
-        menu.addItem(new WatchUi.MenuItem("Demo: new user", "Wipes everything", :fresh, null));
-        menu.addItem(new WatchUi.MenuItem("Demo: month later", "Loads sample data", :month, null));
-        WatchUi.pushView(menu, new SettingsDelegate(_model), WatchUi.SLIDE_LEFT);
+        SettingsDelegate.open(_model);
         return true;
     }
 

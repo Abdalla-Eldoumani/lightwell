@@ -2,29 +2,71 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
+// The settings page. Each setting opens a list of its choices; the wizard writes the same keys.
 class SettingsDelegate extends WatchUi.Menu2InputDelegate {
 
+    // Stored value and shown name of every choice, per setting.
+    static const GOALS = [10, 15, 20, 30, 45, 60];
+    static const BUZZ = ["Buzz and tone", "Soft buzz", "Screen only"];
+
     private var _model as LightwellModel;
+
+    static function open(model as LightwellModel) as Void {
+        var menu = new WatchUi.Menu2({ :title => "Settings" });
+        menu.addItem(new WatchUi.MenuItem("Daily goal", label(:goal), :goal, null));
+        menu.addItem(new WatchUi.MenuItem("Nudge text", label(:words), :words, null));
+        menu.addItem(new WatchUi.MenuItem("Nudge style", label(:buzz), :buzz, null));
+        menu.addItem(new WatchUi.MenuItem("Run setup again", "Go through the wizard", :setup, null));
+        menu.addItem(new WatchUi.MenuItem("Clear today", "Resets today's light", :clear, null));
+        menu.addItem(new WatchUi.MenuItem("Demo: new user", "Wipes everything", :fresh, null));
+        menu.addItem(new WatchUi.MenuItem("Demo: month later", "Loads sample data", :month, null));
+        WatchUi.pushView(menu, new SettingsDelegate(model), WatchUi.SLIDE_LEFT);
+    }
+
+    // The names of a setting's choices, in stored-value order (goal is looked up through GOALS).
+    static function names(id as Symbol) as Array<String> {
+        if (id == :goal) {
+            var out = [] as Array<String>;
+            for (var i = 0; i < GOALS.size(); i++) {
+                out.add(GOALS[i].format("%d") + " min");
+            }
+            return out;
+        }
+        return (id == :words) ? Day.ACTIONS : BUZZ;
+    }
+
+    // Which choice is current.
+    static function current(id as Symbol) as Number {
+        if (id == :goal) {
+            var i = GOALS.indexOf(Day.goalSecs() / 60);
+            return (i >= 0) ? i : 2;
+        }
+        return Day.num(id == :words ? "words" : "buzz") % names(id).size();
+    }
+
+    // The value shown under a setting's name.
+    static function label(id as Symbol) as String {
+        return names(id)[current(id)];
+    }
 
     function initialize(model as LightwellModel) {
         Menu2InputDelegate.initialize();
         _model = model;
     }
 
-    // The value shown under a setting's name.
-    static function label(id as Symbol) as String {
-        if (id == :goal) {
-            return (Day.goalSecs() / 60).format("%d") + " min";
-        }
-        if (id == :words) {
-            return ["Walk", "Roll", "Window", "Doorstep", "Blinds"][Day.num("words") % 5];
-        }
-        return ["Buzz and tone", "Soft buzz", "Screen only"][Day.num("buzz") % 3];
-    }
-
-    // Each press steps a setting to its next value: three or five of each.
     function onSelect(item as WatchUi.MenuItem) as Void {
         var id = item.getId() as Symbol;
+        if (id == :goal || id == :words || id == :buzz) {
+            var list = names(id);
+            var titles = { :goal => "Daily goal", :words => "Nudge text", :buzz => "Nudge style" };
+            var menu = new WatchUi.Menu2({ :title => titles[id] });
+            for (var i = 0; i < list.size(); i++) {
+                menu.addItem(new WatchUi.MenuItem(list[i], (i == current(id)) ? "Selected" : null, i, null));
+            }
+            menu.setFocus(current(id));
+            WatchUi.pushView(menu, new PickDelegate(id, item, _model), WatchUi.SLIDE_LEFT);
+            return;
+        }
         if (id == :clear) {
             _model.resetToday();
             WatchUi.popView(WatchUi.SLIDE_RIGHT);
@@ -43,22 +85,37 @@ class SettingsDelegate extends WatchUi.Menu2InputDelegate {
             Application.Storage.clearValues();
             _model.load();
         }
-        if (id == :setup || id == :fresh) {
-            var setup = new SetupView();
-            WatchUi.switchToView(setup, new SetupDelegate(setup, _model, true), WatchUi.SLIDE_LEFT);
-            return;
-        }
-        if (id == :goal) {
-            var mins = Day.goalSecs() / 60 + 10;
-            Application.Storage.setValue("goal", (mins > 30) ? 10 : mins);
+        // :setup or :fresh: the wizard replaces the settings page and returns to the app when done.
+        var setup = new SetupView();
+        WatchUi.switchToView(setup, new SetupDelegate(setup, _model, true), WatchUi.SLIDE_LEFT);
+    }
+
+}
+
+// One setting's list of choices: picking one saves it and goes back to the settings page.
+class PickDelegate extends WatchUi.Menu2InputDelegate {
+
+    private var _id as Symbol;
+    private var _parent as WatchUi.MenuItem;
+    private var _model as LightwellModel;
+
+    function initialize(id as Symbol, parent as WatchUi.MenuItem, model as LightwellModel) {
+        Menu2InputDelegate.initialize();
+        _id = id;
+        _parent = parent;
+        _model = model;
+    }
+
+    function onSelect(item as WatchUi.MenuItem) as Void {
+        var i = item.getId() as Number;
+        if (_id == :goal) {
+            Application.Storage.setValue("goal", SettingsDelegate.GOALS[i]);
             _model.goalSecs = Day.goalSecs();
-        } else if (id == :words) {
-            Application.Storage.setValue("words", (Day.num("words") + 1) % 5);
         } else {
-            Application.Storage.setValue("buzz", (Day.num("buzz") + 1) % 3);
+            Application.Storage.setValue(_id == :words ? "words" : "buzz", i);
         }
-        item.setSubLabel(label(id));
-        WatchUi.requestUpdate();
+        _parent.setSubLabel(SettingsDelegate.label(_id));
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
     }
 
 }
