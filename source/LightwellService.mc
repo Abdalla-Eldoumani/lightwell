@@ -21,14 +21,15 @@ class LightwellService extends System.ServiceDelegate {
         }
         Day.roll();
         var light = Day.num("light");
+        var goal = Day.goalSecs();
         var stats = System.getSystemStats();
         var s = (stats has :solarIntensity) ? stats.solarIntensity : null;
         if (s != null && s >= Day.LIGHT_MIN) {
             Application.Storage.setValue("light", light + 300);
-            if (light < Day.GOAL_SECS && light + 300 >= Day.GOAL_SECS) {
+            if (light < goal && light + 300 >= goal) {
                 Background.requestApplicationWake("Lightwell goal reached");
             }
-        } else if (light < Day.GOAL_SECS) {
+        } else if (light < goal) {
             nudge();
         }
         Background.exit(null);
@@ -43,7 +44,7 @@ class LightwellService extends System.ServiceDelegate {
         if (mb != null && mb >= 1 && nowMin > Day.num("rise") && nowMin < Day.num("set")
                 && now - Day.num("nudge") > 3600) {
             Application.Storage.setValue("nudge", now);
-            Background.requestApplicationWake("Sun is up. Step outside?");
+            Background.requestApplicationWake("Sun is up. " + Day.action() + "?");
         }
     }
 
