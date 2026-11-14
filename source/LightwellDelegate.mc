@@ -55,6 +55,16 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    // BACK asks before leaving, and is also where the day can be reset.
+    function onBack() as Boolean {
+        var menu = new WatchUi.Menu2({ :title => "Session" });
+        menu.addItem(new WatchUi.MenuItem("Keep going", null, :keep, null));
+        menu.addItem(new WatchUi.MenuItem("Reset today", "Empties the well", :clear, null));
+        menu.addItem(new WatchUi.MenuItem("End session", "Save and exit", :exit, null));
+        WatchUi.pushView(menu, new SettingsDelegate(_model), WatchUi.SLIDE_LEFT);
+        return true;
+    }
+
     function onMenu() as Boolean {
         var menu = new WatchUi.Menu2({ :title => "Settings" });
         menu.addItem(new WatchUi.MenuItem("Daily goal", SettingsDelegate.label(:goal), :goal, null));
@@ -70,6 +80,7 @@ class LightwellDelegate extends WatchUi.BehaviorDelegate {
         menu.addItem(new WatchUi.MenuItem("Demo: new user", "Wipes everything", :fresh, null));
         menu.addItem(new WatchUi.MenuItem("Demo: month later", "Loads sample data", :month, null));
         menu.addItem(new WatchUi.MenuItem("Demo: tense spell", "20 min at a desk", :tense, null));
+        menu.addItem(new WatchUi.MenuItem("Demo: midday check", "The gentle reminder", :midday, null));
         WatchUi.pushView(menu, new SettingsDelegate(_model), WatchUi.SLIDE_LEFT);
         return true;
     }
